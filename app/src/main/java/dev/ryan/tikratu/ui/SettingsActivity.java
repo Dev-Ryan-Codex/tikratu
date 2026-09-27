@@ -12,6 +12,7 @@ public class SettingsActivity extends AppCompatActivity {
 
     public static final String EXTRA_CATEGORY = "category";
     public static final String CATEGORY_ADS = "ads";
+    public static final String CATEGORY_MEDIA = "media";
     public static final String CATEGORY_STREAK = "streak";
 
     @Override
@@ -26,6 +27,9 @@ public class SettingsActivity extends AppCompatActivity {
         if (CATEGORY_STREAK.equals(category)) {
             fragment = new StreakPreferenceFragment();
             title = "Streak";
+        } else if (CATEGORY_MEDIA.equals(category)) {
+            fragment = new MediaPreferenceFragment();
+            title = "Media";
         } else {
             fragment = new AdsPreferenceFragment();
             title = "Anuncios y tracking";

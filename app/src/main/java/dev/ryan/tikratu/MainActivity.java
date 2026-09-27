@@ -31,6 +31,7 @@ public class MainActivity extends AppCompatActivity {
         updateStatusCard();
 
         findViewById(R.id.category_ads).setOnClickListener(v -> openCategory(SettingsActivity.CATEGORY_ADS));
+        findViewById(R.id.category_media).setOnClickListener(v -> openCategory(SettingsActivity.CATEGORY_MEDIA));
         findViewById(R.id.category_streak).setOnClickListener(v -> openCategory(SettingsActivity.CATEGORY_STREAK));
     }
 

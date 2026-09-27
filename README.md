@@ -18,6 +18,7 @@ Nace del análisis de un mod de terceros para TikTok (repack cerrado, re-firmado
 | Bloquear Advertising ID / GAID (`AdsIdBlocker`) | Implementado — apunta a `AdvertisingIdClient.Info` de Play Services, no a código interno de TikTok |
 | Ocultar el App ID de AdMob (`AdsMetadataBlocker`) | Implementado — intercepta `Bundle.getString("com.google.android.gms.ads.APPLICATION_ID")`, verificado que esa key existe en el manifest de 46.4.3 y 47.0.3 |
 | Anular `LocationManager.getLastKnownLocation()` (`LocationBlocker`) | Implementado — no cubre `FusedLocationProviderClient` (API mas moderna de Play Services), ver comentario en el código |
+| Descargar video sin marca de agua (`WatermarkBlocker`) | Implementado — verificado contra 46.4.3 y 47.0.3, ver detalle abajo. No cubre fotos ni GIFs todavía |
 | Recordatorio local de streak (no auto-envío) | Implementado, en la app companion (`streak/`) — notificación programada, no automatiza nada dentro de TikTok |
 | Resto de features del mod original (watermark, duet/stitch, CAPTCHA, region...) | No implementadas todavía — se agregan de a una, siguiendo el mismo patrón (`mods/<categoria>/<Feature>Hook.java`) |
 
@@ -54,6 +55,22 @@ El hook fuerza `param.setResult(false)` — todo el código que consulta `aweme.
 - **`AdsIdBlocker`** — hookea `com.google.android.gms.ads.identifier.AdvertisingIdClient$Info` (clase pública de la librería cliente de Play Services, no de TikTok): `getId()` devuelve un UUID cero, `isLimitAdTrackingEnabled()` devuelve `true`.
 - **`AdsMetadataBlocker`** — TikTok declara `<meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" .../>` en su manifest (confirmado en ambas versiones vía `strings64` sobre el `AndroidManifest.xml` crudo). Se hookea `Bundle.getString(String)` a nivel de proceso e intercepta solo esa key -> `null`, así el SDK de Google Mobile Ads no puede inicializarse.
 - **`LocationBlocker`** — hookea `LocationManager.getLastKnownLocation(String)` -> `null` (valor de retorno válido según la API, no una excepción). No cubre `FusedLocationProviderClient` todavía (ver comentario en el código: su `getLastLocation()` devuelve un `Task<Location>` ya armado, no se puede anular con un simple `setResult(null)` sin arriesgar un NPE en quien lo consume).
+
+## Hook de watermark en descargas
+
+Se decompiló `com.ss.android.ugc.aweme.feed.model.Video` (clase pública, sin ofuscar, mismo motivo que `Aweme` — Gson) en `classes25.dex` (46.4.3) y `classes3.dex` (47.0.3). El servidor de TikTok manda **dos** URLs de descarga por video en la misma respuesta:
+
+```java
+@02s3("download_addr")
+public UrlModel downloadAddr;             // getDownloadAddr() -> con marca de agua
+
+@02s3("download_no_watermark_addr")
+public UrlModel downloadNoWatermarkAddr;  // getDownloadNoWatermarkAddr() -> sin marca de agua
+```
+
+`WatermarkBlocker` hookea `Video.getDownloadAddr()` y, si `getDownloadNoWatermarkAddr()` del mismo objeto no es `null`, reemplaza el resultado por ese valor. No fabrica ninguna URL — solo prioriza el campo que el propio servidor ya manda para este fin. Si un video en particular no trae variante sin marca de agua, el hook no toca nada (se devuelve el resultado original). Verificado idéntico (mismos nombres de clase/campo/getter) en 46.4.3 y 47.0.3.
+
+No cubre fotos ni GIFs (el mod original tenía toggles separados para "Remove Pictures Watermark" / "Remove GIF Watermark") — habría que confirmar si existe un campo `download_no_watermark_addr` equivalente en el modelo de imagen antes de replicarlo ahí.
 
 **Nota de verificación**: no hay entorno Android SDK / emulador / dispositivo en esta máquina, así que el proyecto **no se compiló ni se probó en runtime** todavía. La API exacta de `MethodMatcher`/`FindMethod` de `dexkit:2.0.3` usada en el fallback de `AdBlocker` se escribió según la documentación pública de DexKit, pero hay que confirmarla al abrir el proyecto en Android Studio (primer build) antes de asumir que compila tal cual. Los otros 3 hooks (`AdsIdBlocker`, `AdsMetadataBlocker`, `LocationBlocker`) usan solo la API estándar de Xposed (`XposedHelpers.findAndHookMethod`), sin DexKit.
 
@@ -93,12 +110,14 @@ app/src/main/java/dev/ryan/tikratu/
 ├── MainActivity.java                       # status card + versión de TikTok + categorías
 ├── ui/SettingsActivity.java                 # host de las pantallas de preferencias
 ├── ui/AdsPreferenceFragment.java            # switches de ads/tracking
+├── ui/MediaPreferenceFragment.java          # switch de watermark
 ├── ui/StreakPreferenceFragment.java         # switch + hora del streak
 ├── Xposed/Module.java                      # entry point IXposedHookLoadPackage
 ├── mods/ads/AdBlocker.java                 # isAd() -> false (DexKit + directo)
 ├── mods/tracking/AdsIdBlocker.java         # Advertising ID -> cero
 ├── mods/tracking/AdsMetadataBlocker.java   # oculta el AdMob App ID
 ├── mods/tracking/LocationBlocker.java      # LocationManager -> null
+├── mods/media/WatermarkBlocker.java        # getDownloadAddr() -> getDownloadNoWatermarkAddr()
 ├── streak/StreakReminderScheduler.java     # AlarmManager + SharedPreferences
 ├── streak/StreakReminderReceiver.java      # dispara la notificación
 ├── streak/BootReceiver.java                # re-arma el recordatorio tras reiniciar

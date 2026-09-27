@@ -24,6 +24,9 @@ public final class Prefs {
     public static final String KEY_LOCATION_BLOCKER = "pref_location_blocker_enabled";
     public static final boolean DEFAULT_LOCATION_BLOCKER = true;
 
+    public static final String KEY_WATERMARK_BLOCKER = "pref_watermark_blocker_enabled";
+    public static final boolean DEFAULT_WATERMARK_BLOCKER = true;
+
     public static final String KEY_STREAK_ENABLED = "pref_streak_enabled";
     public static final boolean DEFAULT_STREAK_ENABLED = false;
 
