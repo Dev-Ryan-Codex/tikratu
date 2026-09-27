@@ -18,6 +18,26 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/status_text"
-        android:gravity="center" />
+        android:gravity="center"
+        android:layout_marginBottom="24dp" />
+
+    <Switch
+        android:id="@+id/streak_switch"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Recordatorio de streak"
+        android:layout_marginBottom="8dp" />
+
+    <TextView
+        android:id="@+id/time_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp" />
+
+    <Button
+        android:id="@+id/pick_time_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Elegir hora" />
 
 </LinearLayout>

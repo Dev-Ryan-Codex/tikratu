@@ -14,8 +14,21 @@ Nace del análisis de un mod de terceros para TikTok (repack cerrado, re-firmado
 
 | Feature | Estado |
 |---|---|
-| Quitar el flag "es anuncio" del feed (`AdBlocker`) | Implementado, hook verificado contra el código real de TikTok 46.4.3 (ver abajo) |
-| Resto de features del mod original (watermark, duet/stitch, CAPTCHA, streak, region...) | No implementadas todavía — se agregan de a una, siguiendo el mismo patrón (`mods/<categoria>/<Feature>Hook.java`) |
+| Quitar el flag "es anuncio" del feed (`AdBlocker`) | Implementado, hook verificado contra el código real de TikTok **46.4.3 y 47.0.3** (ver abajo) |
+| Bloquear Advertising ID / GAID (`AdsIdBlocker`) | Implementado — apunta a `AdvertisingIdClient.Info` de Play Services, no a código interno de TikTok |
+| Ocultar el App ID de AdMob (`AdsMetadataBlocker`) | Implementado — intercepta `Bundle.getString("com.google.android.gms.ads.APPLICATION_ID")`, verificado que esa key existe en el manifest de 46.4.3 y 47.0.3 |
+| Anular `LocationManager.getLastKnownLocation()` (`LocationBlocker`) | Implementado — no cubre `FusedLocationProviderClient` (API mas moderna de Play Services), ver comentario en el código |
+| Recordatorio local de streak (no auto-envío) | Implementado, en la app companion (`streak/`) — notificación programada, no automatiza nada dentro de TikTok |
+| Resto de features del mod original (watermark, duet/stitch, CAPTCHA, region...) | No implementadas todavía — se agregan de a una, siguiendo el mismo patrón (`mods/<categoria>/<Feature>Hook.java`) |
+
+### Por qué NO se replicaron otros hallazgos del mod analizado
+
+El mod original (`C:\Audit\equipos\tiktok apk\README.md`) parcheaba y re-firmaba el APK. TikRatu nunca toca el binario de TikTok, así que varios de sus hallazgos no tienen equivalente acá:
+
+- **Bot de streak silencioso** (auto-envío de mensajes sin interacción): se implementó acotado a un recordatorio, no a automatizar el envío — eso ya es simular actividad falsa a escala.
+- **Kill-switch remoto sin permiso**: era una vulnerabilidad/backdoor del mod (cualquier app podía matar TikTok), no una feature a clonar.
+- **Borrar el WebView de ByteDance, limpiar dex muertos, cambiar el ícono**: son ediciones estáticas del APK — un hook en runtime no puede borrar archivos ni cambiar el ícono de una app instalada.
+- **Ofuscación anti-reversing / posible bypass de firma**: el mod la necesitaba porque re-firmaba TikTok con otro certificado. TikRatu nunca re-firma nada, así que no hay firma que bypassear.
 
 ## Cómo funciona el hook de ads
 
@@ -34,7 +47,19 @@ this.LLILLL = aweme.isAd();
 
 El hook fuerza `param.setResult(false)` — todo el código que consulta `aweme.isAd()` para decidir si mostrar UI/tracking de publicidad pasa a ver siempre "no es un anuncio".
 
-**Nota de verificación**: no hay entorno Android SDK / emulador / dispositivo en esta máquina, así que el proyecto **no se compiló ni se probó en runtime** todavía. La API exacta de `MethodMatcher`/`FindMethod` de `dexkit:2.0.3` usada en el fallback se escribió según la documentación pública de DexKit, pero hay que confirmarla al abrir el proyecto en Android Studio (primer build) antes de asumir que compila tal cual.
+**Re-verificado en TikTok 47.0.3** (build apkmirror más nueva que 46.4.3): mismo patrón, misma clase, mismo método. En 47.0.3 `RankData` vive en `classes5.dex` (no en `classes30.dex` como en 46.4.3 — los números de dex se reordenan entre builds, por eso el hook busca por nombre de clase/método y no por número de archivo) y la línea equivalente es `this.LLJJIII = aweme.isAd();`.
+
+## Otros hooks implementados (verificados igual, contra 46.4.3 y 47.0.3)
+
+- **`AdsIdBlocker`** — hookea `com.google.android.gms.ads.identifier.AdvertisingIdClient$Info` (clase pública de la librería cliente de Play Services, no de TikTok): `getId()` devuelve un UUID cero, `isLimitAdTrackingEnabled()` devuelve `true`.
+- **`AdsMetadataBlocker`** — TikTok declara `<meta-data android:name="com.google.android.gms.ads.APPLICATION_ID" .../>` en su manifest (confirmado en ambas versiones vía `strings64` sobre el `AndroidManifest.xml` crudo). Se hookea `Bundle.getString(String)` a nivel de proceso e intercepta solo esa key -> `null`, así el SDK de Google Mobile Ads no puede inicializarse.
+- **`LocationBlocker`** — hookea `LocationManager.getLastKnownLocation(String)` -> `null` (valor de retorno válido según la API, no una excepción). No cubre `FusedLocationProviderClient` todavía (ver comentario en el código: su `getLastLocation()` devuelve un `Task<Location>` ya armado, no se puede anular con un simple `setResult(null)` sin arriesgar un NPE en quien lo consume).
+
+**Nota de verificación**: no hay entorno Android SDK / emulador / dispositivo en esta máquina, así que el proyecto **no se compiló ni se probó en runtime** todavía. La API exacta de `MethodMatcher`/`FindMethod` de `dexkit:2.0.3` usada en el fallback de `AdBlocker` se escribió según la documentación pública de DexKit, pero hay que confirmarla al abrir el proyecto en Android Studio (primer build) antes de asumir que compila tal cual. Los otros 3 hooks (`AdsIdBlocker`, `AdsMetadataBlocker`, `LocationBlocker`) usan solo la API estándar de Xposed (`XposedHelpers.findAndHookMethod`), sin DexKit.
+
+## Recordatorio de streak (sin auto-envío)
+
+El mod original mandaba un mensaje real dentro de TikTok, sin que el usuario tocara nada (via hooks nativos ofuscados en `libtigrik.so`). TikRatu implementa una versión acotada e independiente en la app companion (`streak/StreakReminderScheduler.java`, `StreakReminderReceiver.java`, `BootReceiver.java`): programa una notificación local a una hora elegida por el usuario, que sobrevive reinicios. No hookea nada de TikTok ni automatiza ninguna interacción — el usuario sigue siendo quien manda el mensaje.
 
 ## Build
 
@@ -49,10 +74,16 @@ El hook fuerza `param.setResult(false)` — todo el código que consulta `aweme.
 
 ```
 app/src/main/java/dev/ryan/tikratu/
-├── MainActivity.java          # pantalla de estado (companion app mínima)
-├── Xposed/Module.java         # entry point IXposedHookLoadPackage
-├── mods/ads/AdBlocker.java    # primer hook (isAd() -> false)
-└── utils/log/ModuleLog.java  # wrapper de XposedBridge.log
+├── MainActivity.java                       # companion app: switch + hora del recordatorio
+├── Xposed/Module.java                      # entry point IXposedHookLoadPackage
+├── mods/ads/AdBlocker.java                 # isAd() -> false (DexKit + directo)
+├── mods/tracking/AdsIdBlocker.java         # Advertising ID -> cero
+├── mods/tracking/AdsMetadataBlocker.java   # oculta el AdMob App ID
+├── mods/tracking/LocationBlocker.java      # LocationManager -> null
+├── streak/StreakReminderScheduler.java     # AlarmManager + SharedPreferences
+├── streak/StreakReminderReceiver.java      # dispara la notificación
+├── streak/BootReceiver.java                # re-arma el recordatorio tras reiniciar
+└── utils/log/ModuleLog.java                # wrapper de XposedBridge.log
 ```
 
 Cada feature nueva va en `mods/<categoria>/<Nombre>Hook.java` y se registra en `Module.java`, igual que `AdBlocker`.
