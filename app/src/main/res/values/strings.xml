@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">TikRatu</string>
+    <string name="xposed_description">Módulo LSPosed para la app oficial de TikTok — quita anuncios del feed sin modificar ni redistribuir el APK.</string>
+    <string name="status_text">TikRatu no está activo dentro de TikTok todavía.\n\nActivá el módulo en LSPosed, marcá TikTok (com.zhiliaoapp.musically) en su alcance, y reiniciá la app.</string>
+</resources>

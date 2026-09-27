@@ -1,0 +1,5 @@
+<resources>
+    <string-array name="target_app">
+        <item>com.zhiliaoapp.musically</item>
+    </string-array>
+</resources>
