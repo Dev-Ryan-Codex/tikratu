@@ -2,7 +2,7 @@
 
 Módulo Xposed/LSPosed para la app **oficial** de TikTok (`com.zhiliaoapp.musically`). No parchea, no re-firma ni redistribuye el APK — corre como hook en runtime sobre la instalación oficial del usuario, en un dispositivo con root + LSPosed.
 
-Inspirado en [InstaEclipse](https://github.com/ReSo7200/InstaEclipse) (mismo patrón: módulo standalone + [DexKit](https://github.com/LuckyPray/DexKit) para ubicar métodos en runtime sin depender de nombres ofuscados fijos).
+Inspirado en [InstaEclipse](https://github.com/ReSo7200/InstaEclipse) (módulo standalone + [DexKit](https://github.com/LuckyPray/DexKit) para ubicar métodos en runtime sin depender de nombres ofuscados fijos) y en [WaEnhancer](https://github.com/Dev4Mod/WaEnhancer) (UI de la companion app: categorías con pantallas de preferencias, cada feature con su propio switch).
 
 Ver [DISCLAIMER.md](DISCLAIMER.md) antes de usarlo.
 
@@ -61,20 +61,39 @@ El hook fuerza `param.setResult(false)` — todo el código que consulta `aweme.
 
 El mod original mandaba un mensaje real dentro de TikTok, sin que el usuario tocara nada (via hooks nativos ofuscados en `libtigrik.so`). TikRatu implementa una versión acotada e independiente en la app companion (`streak/StreakReminderScheduler.java`, `StreakReminderReceiver.java`, `BootReceiver.java`): programa una notificación local a una hora elegida por el usuario, que sobrevive reinicios. No hookea nada de TikTok ni automatiza ninguna interacción — el usuario sigue siendo quien manda el mensaje.
 
+## App companion: categorías + switches
+
+La companion app (lo que ves al abrir el ícono de TikRatu, corriendo en su propio proceso, no dentro de TikTok) tiene:
+
+- **Card de estado**: si LSPosed está cargando el módulo de verdad (ver truco de detección abajo) + **versión de TikTok instalada** (`versionName` + `versionCode` leídos con `PackageManager.getPackageInfo`, requiere declarar `<queries>` en el manifest por las reglas de visibilidad de paquetes de Android 11+).
+- **Categoría "Anuncios y tracking"**: switches independientes para `AdBlocker`, `AdsIdBlocker`, `AdsMetadataBlocker`, `LocationBlocker` (`res/xml/prefs_ads.xml`).
+- **Categoría "Streak"**: switch de activar/desactivar + selector de hora (`res/xml/prefs_streak.xml`).
+
+Cada switch es un `SwitchPreferenceCompat` estándar de `androidx.preference` — se persiste solo en el archivo de SharedPreferences por defecto de la app. `Module.java` lee ese mismo archivo con `XSharedPreferences` al cargar en el proceso de TikTok, y solo instala el hook si el switch está prendido. **Importante**: como la lectura de prefs pasa una sola vez, al principio de `handleLoadPackage`, tocar un switch requiere **forzar el cierre de TikTok y volver a abrirlo** para que tome efecto (no hay refresco en caliente).
+
+### Truco de "¿el módulo está activo?"
+
+`dev.ryan.tikratu.utils.StatusChecker.isModuleActive()` siempre devuelve `false` en el código fuente. `dev.ryan.tikratu` se agrega a sí mismo como target en `xposedscope` (`arrays.xml`), y cuando LSPosed carga la companion app, `Module.java` hookea ese método puntual para que devuelva `true`. Si la companion app lo llama y ve `true`, es porque LSPosed realmente está activo — es la técnica estándar que usan la mayoría de los módulos Xposed/LSPosed para este chequeo (incluido WaEnhancer).
+
 ## Build
 
 1. Abrir la carpeta en Android Studio (usa Gradle 8.10.2 / AGP 8.7.0, iguales a InstaEclipse).
 2. `./gradlew assembleDebug` (o el botón Run de Android Studio).
 3. Instalar el APK en el celular con LSPosed.
-4. Activar el módulo en LSPosed Manager, marcar `com.zhiliaoapp.musically` en su alcance.
-5. Forzar el cierre de TikTok y volver a abrirlo.
-6. Revisar logs con `adb logcat | grep TikRatu` o desde el visor de logs de LSPosed.
+4. Activar el módulo en LSPosed Manager, marcar `com.zhiliaoapp.musically` **y `dev.ryan.tikratu`** en su alcance (el segundo es necesario para el truco de "¿está activo?" de arriba).
+5. Abrir TikRatu, confirmar que dice "Módulo activo" y que muestra la versión de TikTok instalada.
+6. Configurar los switches que quieras en cada categoría.
+7. Forzar el cierre de TikTok y volver a abrirlo para que los hooks tomen los valores actuales.
+8. Revisar logs con `adb logcat | grep TikRatu` o desde el visor de logs de LSPosed.
 
 ## Estructura
 
 ```
 app/src/main/java/dev/ryan/tikratu/
-├── MainActivity.java                       # companion app: switch + hora del recordatorio
+├── MainActivity.java                       # status card + versión de TikTok + categorías
+├── ui/SettingsActivity.java                 # host de las pantallas de preferencias
+├── ui/AdsPreferenceFragment.java            # switches de ads/tracking
+├── ui/StreakPreferenceFragment.java         # switch + hora del streak
 ├── Xposed/Module.java                      # entry point IXposedHookLoadPackage
 ├── mods/ads/AdBlocker.java                 # isAd() -> false (DexKit + directo)
 ├── mods/tracking/AdsIdBlocker.java         # Advertising ID -> cero
@@ -83,10 +102,13 @@ app/src/main/java/dev/ryan/tikratu/
 ├── streak/StreakReminderScheduler.java     # AlarmManager + SharedPreferences
 ├── streak/StreakReminderReceiver.java      # dispara la notificación
 ├── streak/BootReceiver.java                # re-arma el recordatorio tras reiniciar
+├── utils/Prefs.java                        # keys de preferencias compartidas UI <-> hooks
+├── utils/StatusChecker.java                 # truco de detección "¿está activo?"
+├── utils/ModulePackage.java                 # nombre de paquete propio (para XSharedPreferences)
 └── utils/log/ModuleLog.java                # wrapper de XposedBridge.log
 ```
 
-Cada feature nueva va en `mods/<categoria>/<Nombre>Hook.java` y se registra en `Module.java`, igual que `AdBlocker`.
+Cada feature nueva va en `mods/<categoria>/<Nombre>Hook.java`, se agrega su switch en el `res/xml/prefs_<categoria>.xml` correspondiente (misma key en `utils/Prefs.java`), y se registra el gating en `Module.java`, igual que las que ya existen.
 
 ## Licencia
 

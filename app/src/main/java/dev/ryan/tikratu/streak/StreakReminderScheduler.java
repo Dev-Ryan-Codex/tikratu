@@ -7,63 +7,76 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 
+import androidx.preference.PreferenceManager;
+
 import java.util.Calendar;
+
+import dev.ryan.tikratu.utils.Prefs;
 
 /**
  * Recordatorio LOCAL de streak — a diferencia del "AutoStreak" del mod original
  * (que mandaba un mensaje real dentro de TikTok sin que el usuario tocara nada),
  * esto solo dispara una notificacion del sistema a una hora fija para que el
  * usuario mismo mande el mensaje. No hookea nada de TikTok, no automatiza
- * ninguna interaccion dentro de la app — es un despertador con Intent en vez
- * de sonido.
+ * ninguna interaccion dentro de la app.
+ *
+ * Usa el archivo de SharedPreferences por defecto de la app (el mismo que
+ * escriben los SwitchPreferenceCompat de la UI), asi el switch en
+ * prefs_streak.xml y este codigo quedan sincronizados sin logica extra.
  */
 public final class StreakReminderScheduler {
 
-    private static final String PREFS = "tikratu_prefs";
-    private static final String KEY_ENABLED = "streak_reminder_enabled";
-    private static final String KEY_HOUR = "streak_reminder_hour";
-    private static final String KEY_MINUTE = "streak_reminder_minute";
     private static final int REQUEST_CODE = 1001;
 
     private StreakReminderScheduler() {
     }
 
-    public static void schedule(Context context, int hour, int minute) {
-        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-        prefs.edit()
-                .putBoolean(KEY_ENABLED, true)
-                .putInt(KEY_HOUR, hour)
-                .putInt(KEY_MINUTE, minute)
-                .apply();
-
-        armNextAlarm(context, hour, minute);
+    private static SharedPreferences prefs(Context context) {
+        return PreferenceManager.getDefaultSharedPreferences(context);
     }
 
-    public static void cancel(Context context) {
-        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-        prefs.edit().putBoolean(KEY_ENABLED, false).apply();
+    /** Prende o apaga el recordatorio (llamado desde el switch de la UI). */
+    public static void setEnabled(Context context, boolean enabled) {
+        prefs(context).edit().putBoolean(Prefs.KEY_STREAK_ENABLED, enabled).apply();
+        if (enabled) {
+            armNextAlarm(context, getHour(context), getMinute(context));
+        } else {
+            cancelAlarm(context);
+        }
+    }
 
-        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        alarmManager.cancel(buildPendingIntent(context));
+    /** Cambia la hora guardada. Si el recordatorio ya estaba activo, lo reprograma. */
+    public static void setTime(Context context, int hour, int minute) {
+        prefs(context).edit()
+                .putInt(Prefs.KEY_STREAK_HOUR, hour)
+                .putInt(Prefs.KEY_STREAK_MINUTE, minute)
+                .apply();
+        if (isEnabled(context)) {
+            armNextAlarm(context, hour, minute);
+        }
     }
 
     public static boolean isEnabled(Context context) {
-        return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-                .getBoolean(KEY_ENABLED, false);
+        return prefs(context).getBoolean(Prefs.KEY_STREAK_ENABLED, Prefs.DEFAULT_STREAK_ENABLED);
     }
 
     public static int getHour(Context context) {
-        return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getInt(KEY_HOUR, 20);
+        return prefs(context).getInt(Prefs.KEY_STREAK_HOUR, Prefs.DEFAULT_STREAK_HOUR);
     }
 
     public static int getMinute(Context context) {
-        return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getInt(KEY_MINUTE, 0);
+        return prefs(context).getInt(Prefs.KEY_STREAK_MINUTE, Prefs.DEFAULT_STREAK_MINUTE);
     }
 
     /** Llamado por StreakReminderReceiver despues de mostrar la notificacion, y por BootReceiver. */
     public static void rearmIfEnabled(Context context) {
         if (!isEnabled(context)) return;
         armNextAlarm(context, getHour(context), getMinute(context));
+    }
+
+    private static void cancelAlarm(Context context) {
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        alarmManager.cancel(buildPendingIntent(context));
     }
 
     private static void armNextAlarm(Context context, int hour, int minute) {

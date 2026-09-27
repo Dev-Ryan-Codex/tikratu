@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.TikRatu" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
+        <item name="colorPrimary">#FF0050</item>
+        <item name="colorPrimaryDark">#C4003A</item>
+        <item name="colorAccent">#25F4EE</item>
+    </style>
+</resources>

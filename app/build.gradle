@@ -31,6 +31,7 @@ dependencies {
     implementation libs.appcompat
     implementation libs.material
     implementation libs.constraintlayout
+    implementation libs.preference
     implementation libs.dexkit
 
     testImplementation libs.junit

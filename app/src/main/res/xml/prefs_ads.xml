@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory android:title="Feed">
+        <SwitchPreferenceCompat
+            android:key="pref_ad_blocker_enabled"
+            android:title="Quitar anuncios del feed"
+            android:summary="Hookea Aweme.isAd() para que TikTok trate cada post como si no fuera un anuncio."
+            android:defaultValue="true" />
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="Tracking">
+        <SwitchPreferenceCompat
+            android:key="pref_ads_id_blocker_enabled"
+            android:title="Anular Advertising ID"
+            android:summary="AdvertisingIdClient.Info devuelve un UUID cero y limitAdTracking=true."
+            android:defaultValue="true" />
+
+        <SwitchPreferenceCompat
+            android:key="pref_ads_metadata_blocker_enabled"
+            android:title="Ocultar App ID de AdMob"
+            android:summary="Impide que el SDK de Google Mobile Ads se inicialice."
+            android:defaultValue="true" />
+
+        <SwitchPreferenceCompat
+            android:key="pref_location_blocker_enabled"
+            android:title="Bloquear ubicación"
+            android:summary="LocationManager.getLastKnownLocation() siempre devuelve null dentro de TikTok."
+            android:defaultValue="true" />
+    </PreferenceCategory>
+
+</PreferenceScreen>
