@@ -53,6 +53,33 @@ public final class AppPrefs {
         }
     }
 
+    public static long getLong(Context context, String key, long defaultValue) {
+        String raw = load(context).getProperty(key);
+        if (raw == null) return defaultValue;
+        try {
+            return Long.parseLong(raw.trim());
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
+    }
+
+    public static String getString(Context context, String key, String defaultValue) {
+        String raw = load(context).getProperty(key);
+        return raw != null ? raw : defaultValue;
+    }
+
+    public static void putLong(Context context, String key, long value) {
+        Properties props = load(context);
+        props.setProperty(key, String.valueOf(value));
+        save(context, props);
+    }
+
+    public static void putString(Context context, String key, String value) {
+        Properties props = load(context);
+        props.setProperty(key, value);
+        save(context, props);
+    }
+
     public static void putBoolean(Context context, String key, boolean value) {
         Properties props = load(context);
         props.setProperty(key, String.valueOf(value));

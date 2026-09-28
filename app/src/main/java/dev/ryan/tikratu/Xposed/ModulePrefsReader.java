@@ -56,4 +56,19 @@ final class ModulePrefsReader {
         String raw = values.get(key);
         return raw != null ? Boolean.parseBoolean(raw) : defaultValue;
     }
+
+    long getLong(String key, long defaultValue) {
+        String raw = values.get(key);
+        if (raw == null) return defaultValue;
+        try {
+            return Long.parseLong(raw.trim());
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
+    }
+
+    String getString(String key, String defaultValue) {
+        String raw = values.get(key);
+        return raw != null ? raw : defaultValue;
+    }
 }

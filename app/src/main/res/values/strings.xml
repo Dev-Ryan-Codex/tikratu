@@ -24,6 +24,25 @@
     <string name="feature_url_sanitizer_title">Limpiar links copiados</string>
     <string name="feature_url_sanitizer_desc">Quita parámetros de tracking (utm_*, ttclid, etc.) al copiar un enlace de TikTok</string>
 
+    <string name="section_feed">Feed</string>
+    <string name="feature_hide_live_title">Quitar directos</string>
+    <string name="feature_hide_live_desc">No mostrar directos (LIVE) en el feed</string>
+    <string name="feature_hide_story_title">Quitar historias</string>
+    <string name="feature_hide_story_desc">No mostrar historias en el feed</string>
+    <string name="feature_hide_shop_title">Ocultar videos de la Tienda</string>
+    <string name="feature_hide_shop_desc">No mostrar videos de TikTok Shop en el feed</string>
+    <string name="feature_hide_image_title">Eliminar presentación</string>
+    <string name="feature_hide_image_desc">No mostrar posts de fotos/diapositivas en el feed</string>
+    <string name="feature_max_duration_title">Ocultar publicaciones largas (segundos)</string>
+    <string name="feature_min_views_title">Mínimo de vistas</string>
+    <string name="feature_min_likes_title">Mínimo de me gusta</string>
+    <string name="feature_blocklist_title">Lista de bloqueo de descripción</string>
+    <string name="feature_blocklist_hint">Palabras separadas por coma</string>
+    <string name="value_disabled">Desactivado</string>
+    <string name="feed_filter_note">Los filtros de feed pueden demorar la carga y, si filtran demasiado, causar el error \"No hay más resultados\".</string>
+    <string name="dialog_ok">Guardar</string>
+    <string name="dialog_cancel">Cancelar</string>
+
     <string name="section_ui">Interfaz</string>
     <string name="feature_font_style_title">Fuente del sistema</string>
     <string name="feature_font_style_desc">Reemplaza TikTok Sans (font/TikTokSans-VF.otf) por la fuente sans-serif del sistema</string>

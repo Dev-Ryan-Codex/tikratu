@@ -41,6 +41,36 @@ public final class Prefs {
     public static final String KEY_FONT_STYLE_BLOCKER = "pref_font_style_blocker_enabled";
     public static final boolean DEFAULT_FONT_STYLE_BLOCKER = false;
 
+    // Filtro de feed (FeedFilterBlocker). Todo apagado por defecto: cambian
+    // que contenido se ve, no son fixes de privacidad/ads.
+    public static final String KEY_HIDE_LIVE = "pref_feed_hide_live";
+    public static final boolean DEFAULT_HIDE_LIVE = false;
+
+    public static final String KEY_HIDE_STORY = "pref_feed_hide_story";
+    public static final boolean DEFAULT_HIDE_STORY = false;
+
+    public static final String KEY_HIDE_SHOP = "pref_feed_hide_shop";
+    public static final boolean DEFAULT_HIDE_SHOP = false;
+
+    public static final String KEY_HIDE_IMAGE = "pref_feed_hide_image";
+    public static final boolean DEFAULT_HIDE_IMAGE = false;
+
+    /** Segundos; 0 = desactivado. */
+    public static final String KEY_MAX_DURATION_SEC = "pref_feed_max_duration_sec";
+    public static final long DEFAULT_MAX_DURATION_SEC = 0;
+
+    /** 0 = desactivado. */
+    public static final String KEY_MIN_VIEWS = "pref_feed_min_views";
+    public static final long DEFAULT_MIN_VIEWS = 0;
+
+    /** 0 = desactivado. */
+    public static final String KEY_MIN_LIKES = "pref_feed_min_likes";
+    public static final long DEFAULT_MIN_LIKES = 0;
+
+    /** Palabras separadas por coma; vacio = desactivado. */
+    public static final String KEY_CAPTION_BLOCKLIST = "pref_feed_caption_blocklist";
+    public static final String DEFAULT_CAPTION_BLOCKLIST = "";
+
     public static final String KEY_STREAK_ENABLED = "pref_streak_enabled";
     public static final boolean DEFAULT_STREAK_ENABLED = false;
 

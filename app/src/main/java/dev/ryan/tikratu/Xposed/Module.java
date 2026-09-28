@@ -11,6 +11,7 @@ import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 import dev.ryan.tikratu.mods.ads.AdBlocker;
 import dev.ryan.tikratu.mods.ads.AdSignalsBlocker;
+import dev.ryan.tikratu.mods.feed.FeedFilterBlocker;
 import dev.ryan.tikratu.mods.tracking.AdsIdBlocker;
 import dev.ryan.tikratu.mods.tracking.AdsMetadataBlocker;
 import dev.ryan.tikratu.mods.tracking.LocationBlocker;
@@ -112,6 +113,19 @@ public class Module implements IXposedHookLoadPackage, IXposedHookZygoteInit {
         }
         if (prefs.getBoolean(Prefs.KEY_FONT_STYLE_BLOCKER, Prefs.DEFAULT_FONT_STYLE_BLOCKER)) {
             new FontStyleBlocker().block(lpparam.classLoader);
+        }
+
+        FeedFilterBlocker feedFilter = new FeedFilterBlocker(
+                prefs.getBoolean(Prefs.KEY_HIDE_LIVE, Prefs.DEFAULT_HIDE_LIVE),
+                prefs.getBoolean(Prefs.KEY_HIDE_STORY, Prefs.DEFAULT_HIDE_STORY),
+                prefs.getBoolean(Prefs.KEY_HIDE_SHOP, Prefs.DEFAULT_HIDE_SHOP),
+                prefs.getBoolean(Prefs.KEY_HIDE_IMAGE, Prefs.DEFAULT_HIDE_IMAGE),
+                prefs.getLong(Prefs.KEY_MAX_DURATION_SEC, Prefs.DEFAULT_MAX_DURATION_SEC),
+                prefs.getLong(Prefs.KEY_MIN_VIEWS, Prefs.DEFAULT_MIN_VIEWS),
+                prefs.getLong(Prefs.KEY_MIN_LIKES, Prefs.DEFAULT_MIN_LIKES),
+                prefs.getString(Prefs.KEY_CAPTION_BLOCKLIST, Prefs.DEFAULT_CAPTION_BLOCKLIST));
+        if (feedFilter.isActive()) {
+            feedFilter.block(lpparam.classLoader);
         }
 
         if (prefs.getBoolean(Prefs.KEY_AD_BLOCKER, Prefs.DEFAULT_AD_BLOCKER)) {
