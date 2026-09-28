@@ -70,22 +70,25 @@ Del "TikTok Plugin" de las capturas (`C:\Audit\equipos\tiktok apk\img tiktok plu
 
 Columna "Estado real" = confirmado con logs de un dispositivo real (Android 16 / LineageOS + KernelSU Next + LSPosed), no solo análisis estático. Ver §"Pruebas en dispositivo real" para el detalle de cada uno.
 
+**Revisión completa (2026-09-28):** se activaron los 20 toggles a la vez y se reinició TikTok. Resultado: **11 de 13 hooks cargan sin error, cero crashes, TikTok sigue corriendo con todo activo.** Único "fallo" restante: `AdsIdBlocker` (no-op benigno, este device no tiene la librería de Play Services). Log de referencia: `prefs leidas via PrefsProvider (20 keys)`.
+
 | Feature | Estado real (dispositivo) |
 |---|---|
-| Quitar el flag "es anuncio" del feed (`AdBlocker`) | 🟢 **Arreglado y confirmado en dispositivo real (2026-09-27)** — DexKit carga y `Aweme.isAd()` se hookea directo (ver detalle abajo) |
-| Bloquear Advertising ID / GAID (`AdsIdBlocker`) | 🟡 No-op en este dispositivo (LineageOS sin Play Services con esa librería) — sin verificar en un device con Play Services real |
-| Ocultar el App ID de AdMob (`AdsMetadataBlocker`) | 🔴 **Roto** — el hook falla al instalarse (`Bundle#getString` no hookeable en este build/Android 16) |
-| Anular `LocationManager.getLastKnownLocation()` (`LocationBlocker`) | 🟢 Se instala correctamente (no se verificó el efecto en runtime, solo la instalación del hook) |
-| Descargar video sin marca de agua (`WatermarkBlocker`) | 🔴 **Sigue roto — tikwm.com tampoco lo soluciona, confirmado con 2 videos/cuentas distintas** (2026-09-27). Se deja el código activo (no rompe nada, es best-effort) pero sin expectativa de que funcione hoy (ver detalle abajo) |
-| Limpiar links copiados (`UrlSanitizerBlocker`) | ⚪ Código completo, no probado todavía en dispositivo |
-| Descargar foto (slideshow) sin marca de agua (`PhotoWatermarkBlocker`) | ⚪ Se instala correctamente — no probado todavía con un post de foto real |
-| Marca de agua en GIFs | No implementado — el mecanismo es distinto (dibujado por el cliente, no una URL alternativa del servidor) |
-| Recordatorio local de streak (no auto-envío) | ⚪ No probado en este dispositivo todavía |
-| Forzar descarga habilitada (`DownloadUnlockBlocker`) | 🟢 Se instala correctamente en dispositivo real (no se verificó el efecto en un post con `preventDownload=true`, solo la instalación del hook) |
-| Anuncios encubiertos: `isSoftAd`/`isPseudoAd`/`isSearchPreciseAd` (`AdSignalsBlocker`) | 🟢 Se instala correctamente en dispositivo real (no se verificó el efecto visual, solo la instalación de los 3 hooks) |
-| Ocultar CAPTCHA (`hideCaptcha` del plugin original) | ❌ **Descartado** — ver "Features descartadas por falta de hook seguro" |
-| Ocultar tipos de contenido del feed (stories/shop/recomendaciones/live) | Pendiente — requiere ubicar el filtro a nivel de adaptador de feed, no el getter de tipo (ver nota de seguridad más abajo) |
-| Resto de features del mod original (duet/stitch, filtros de feed, region, UI...) | No implementadas todavía — se agregan de a una, siguiendo el mismo patrón (`mods/<categoria>/<Feature>Hook.java`) |
+| Quitar anuncios del feed (`AdBlocker`) | 🟢 Hook carga (`Aweme.isAd()` directo + DexKit) |
+| Bloquear Advertising ID / GAID (`AdsIdBlocker`) | 🟡 No-op en este device (LineageOS sin Play Services) — sin verificar en un device con Play Services |
+| Ocultar el App ID de AdMob (`AdsMetadataBlocker`) | 🟢 Hook carga (`getApplicationInfo`, 2 métodos) — antes fallaba con `Bundle.getString`, ver fix abajo. Efecto real pendiente de un device con Play Services |
+| Bloquear ubicación (`LocationBlocker`) | 🟢 Hook carga |
+| Quitar anuncios encubiertos (`AdSignalsBlocker`) | 🟢 Hooks cargan (isSoftAd/isPseudoAd/isSearchPreciseAd) |
+| Limpiar links copiados (`UrlSanitizerBlocker`) | 🟢 Hook carga (`ClipboardManager.setPrimaryClip`) |
+| Marca de agua en video (`WatermarkBlocker`) | 🟡 **Primer resultado positivo** con `getTranscode()=1` (SexAlloy): video descargado sin marca flotante en 4 frames. Pendiente confirmar con video de creador simple |
+| Marca de agua en foto (`PhotoWatermarkBlocker`) | 🟢 Hook carga — no probado con un post de foto real |
+| Forzar descarga habilitada (`DownloadUnlockBlocker`) | 🟢 Hook carga (`isPreventDownload`) |
+| Filtro de feed (`FeedFilterBlocker`) | 🟢 **Probado**: "Quitar directos" → `2 de 9 items filtrados`. Cubre directos/historias/Tienda/fotos/largos/vistas/likes/palabras |
+| Dejar de reproducir en bucle (`StopVideoLoopingBlocker`) | 🟢 Hook carga (`TTVideoEngine.setLooping`) |
+| No detectar capturas (`ScreenCaptureBlocker`) | 🟢 Hook carga (2 métodos de `Activity`) |
+| Estilo de fuente (`FontStyleBlocker`) | 🟢 **Confirmado visualmente** — el texto del feed cambia de tipografía |
+| Recordatorio local de streak | ⚪ No probado en este device |
+| Ocultar CAPTCHA / Tako / fecha de publicación | Punto de hook identificado (ReVanced/SexAlloy) pero no implementado — ver arriba |
 
 ## Pruebas en dispositivo real (2026-09-27)
 
