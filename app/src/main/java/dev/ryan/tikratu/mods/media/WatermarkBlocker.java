@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import de.robv.android.xposed.XC_MethodHook;
+import de.robv.android.xposed.XC_MethodReplacement;
 import de.robv.android.xposed.XposedHelpers;
 import dev.ryan.tikratu.utils.log.ModuleLog;
 
@@ -74,6 +75,14 @@ import dev.ryan.tikratu.utils.log.ModuleLog;
  * -> tikwm.com -> downloadNoWatermarkAddr (último fallback, sabido roto).
  * El hook loguea uri+urlList de cada candidato antes de elegir, para poder
  * diagnosticar en logcat cuál (si alguno) sirve contenido limpio.
+ *
+ * MECANISMO PRINCIPAL (importado 2026-09-28 de gnadgnaoh/SexAlloy vía
+ * mentalblank/Tiktok-Revanced): ademas de todo lo anterior, se fuerza
+ * ACLCommonShare.getTranscode() -> 1. Ese campo (default 3) es la señal
+ * con la que TikTok decide si el archivo descargado lleva marca; es un
+ * mecanismo DISTINTO al swap de URL de arriba, y el que usa el modulo
+ * Xposed de referencia. Pendiente de confirmar el efecto real en el
+ * archivo descargado (los swaps de URL ya se probaron sin exito).
  */
 public class WatermarkBlocker {
 
@@ -101,7 +110,24 @@ public class WatermarkBlocker {
     });
     private static final long RESOLVE_TIMEOUT_MS = 2500;
 
+    private static final String ACL_COMMON_SHARE_CLASS = "com.ss.android.ugc.aweme.feed.model.ACLCommonShare";
+    private static final int TRANSCODE_NO_WATERMARK = 1;
+
     public void block(ClassLoader classLoader) {
+        // Mecanismo nuevo, importado del modulo Xposed gnadgnaoh/SexAlloy
+        // (via mentalblank/Tiktok-Revanced): TikTok decide si el archivo
+        // descargado lleva marca de agua segun ACLCommonShare.getTranscode()
+        // (campo "transcode", default 3). Forzarlo a 1 (sin marca) es el punto
+        // que usa ese modulo. Clase/campo/metodo confirmados sin ofuscar en
+        // 47.0.3 (ACLCommonShare.java: "public int transcode = 3", getTranscode()).
+        try {
+            XposedHelpers.findAndHookMethod(ACL_COMMON_SHARE_CLASS, classLoader, "getTranscode",
+                    XC_MethodReplacement.returnConstant(TRANSCODE_NO_WATERMARK));
+            ModuleLog.line("(TikRatu | WatermarkBlocker): hooked " + ACL_COMMON_SHARE_CLASS + ".getTranscode() -> " + TRANSCODE_NO_WATERMARK);
+        } catch (Throwable t) {
+            ModuleLog.line("(TikRatu | WatermarkBlocker): no se pudo hookear getTranscode (" + t.getMessage() + ")");
+        }
+
         try {
             XposedHelpers.findAndHookMethod(AWEME_CLASS, classLoader, "getVideo",
                     new XC_MethodHook() {

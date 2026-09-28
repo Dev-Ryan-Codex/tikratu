@@ -131,6 +131,9 @@ public class FeaturesActivity extends Activity {
         list.add(FeatureItem.toggle(
                 getString(R.string.feature_stop_loop_title), getString(R.string.feature_stop_loop_desc),
                 Prefs.KEY_STOP_VIDEO_LOOPING, Prefs.DEFAULT_STOP_VIDEO_LOOPING));
+        list.add(FeatureItem.toggle(
+                getString(R.string.feature_screen_capture_title), getString(R.string.feature_screen_capture_desc),
+                Prefs.KEY_SCREEN_CAPTURE_BLOCKER, Prefs.DEFAULT_SCREEN_CAPTURE_BLOCKER));
 
         list.add(FeatureItem.header(getString(R.string.section_ui)));
         list.add(FeatureItem.toggle(

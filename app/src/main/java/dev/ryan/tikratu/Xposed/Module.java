@@ -13,6 +13,7 @@ import dev.ryan.tikratu.mods.ads.AdBlocker;
 import dev.ryan.tikratu.mods.ads.AdSignalsBlocker;
 import dev.ryan.tikratu.mods.feed.FeedFilterBlocker;
 import dev.ryan.tikratu.mods.interaction.StopVideoLoopingBlocker;
+import dev.ryan.tikratu.mods.interaction.ScreenCaptureBlocker;
 import dev.ryan.tikratu.mods.tracking.AdsIdBlocker;
 import dev.ryan.tikratu.mods.tracking.AdsMetadataBlocker;
 import dev.ryan.tikratu.mods.tracking.LocationBlocker;
@@ -130,6 +131,9 @@ public class Module implements IXposedHookLoadPackage, IXposedHookZygoteInit {
         }
         if (prefs.getBoolean(Prefs.KEY_STOP_VIDEO_LOOPING, Prefs.DEFAULT_STOP_VIDEO_LOOPING)) {
             new StopVideoLoopingBlocker().block(lpparam.classLoader);
+        }
+        if (prefs.getBoolean(Prefs.KEY_SCREEN_CAPTURE_BLOCKER, Prefs.DEFAULT_SCREEN_CAPTURE_BLOCKER)) {
+            new ScreenCaptureBlocker().block(lpparam.classLoader);
         }
 
         if (prefs.getBoolean(Prefs.KEY_AD_BLOCKER, Prefs.DEFAULT_AD_BLOCKER)) {

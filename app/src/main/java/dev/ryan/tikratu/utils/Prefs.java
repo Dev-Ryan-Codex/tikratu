@@ -74,6 +74,9 @@ public final class Prefs {
     public static final String KEY_STOP_VIDEO_LOOPING = "pref_stop_video_looping";
     public static final boolean DEFAULT_STOP_VIDEO_LOOPING = false;
 
+    public static final String KEY_SCREEN_CAPTURE_BLOCKER = "pref_screen_capture_blocker";
+    public static final boolean DEFAULT_SCREEN_CAPTURE_BLOCKER = false;
+
     public static final String KEY_STREAK_ENABLED = "pref_streak_enabled";
     public static final boolean DEFAULT_STREAK_ENABLED = false;
 

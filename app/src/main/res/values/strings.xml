@@ -45,6 +45,8 @@
 
     <string name="feature_stop_loop_title">Dejar de reproducir en bucle</string>
     <string name="feature_stop_loop_desc">El video se detiene al terminar en vez de repetirse (TTVideoEngine.setLooping)</string>
+    <string name="feature_screen_capture_title">No detectar capturas de pantalla</string>
+    <string name="feature_screen_capture_desc">TikTok no reacciona a screenshots ni grabaciones de pantalla</string>
 
     <string name="section_ui">Interfaz</string>
     <string name="feature_font_style_title">Fuente del sistema</string>
