@@ -28,7 +28,9 @@ public class StopVideoLoopingBlocker {
                     new XC_MethodHook() {
                         @Override
                         protected void beforeHookedMethod(MethodHookParam param) {
-                            if (RuntimeSettings.enabled(Prefs.KEY_STOP_VIDEO_LOOPING, Prefs.DEFAULT_STOP_VIDEO_LOOPING)) {
+                            boolean on = RuntimeSettings.enabled(Prefs.KEY_STOP_VIDEO_LOOPING, Prefs.DEFAULT_STOP_VIDEO_LOOPING);
+                            ModuleLog.line("(TikRatu | diag-loop): setLooping(" + param.args[0] + ") toggle=" + on + (on ? " -> forzando false" : " -> pass-through"));
+                            if (on) {
                                 param.args[0] = false;
                             }
                         }
