@@ -18,7 +18,9 @@ Nace del análisis de un mod de terceros para TikTok (repack cerrado, re-firmado
 | Bloquear Advertising ID / GAID (`AdsIdBlocker`) | Implementado — apunta a `AdvertisingIdClient.Info` de Play Services, no a código interno de TikTok |
 | Ocultar el App ID de AdMob (`AdsMetadataBlocker`) | Implementado — intercepta `Bundle.getString("com.google.android.gms.ads.APPLICATION_ID")`, verificado que esa key existe en el manifest de 46.4.3 y 47.0.3 |
 | Anular `LocationManager.getLastKnownLocation()` (`LocationBlocker`) | Implementado — no cubre `FusedLocationProviderClient` (API mas moderna de Play Services), ver comentario en el código |
-| Descargar video sin marca de agua (`WatermarkBlocker`) | Implementado — verificado contra 46.4.3 y 47.0.3, ver detalle abajo. No cubre fotos ni GIFs todavía |
+| Descargar video sin marca de agua (`WatermarkBlocker`) | Implementado — verificado contra 46.4.3 y 47.0.3, ver detalle abajo |
+| Descargar foto (slideshow) sin marca de agua (`PhotoWatermarkBlocker`) | Implementado parcialmente — cubre el camino protobuf, no el JSON/Gson (ver detalle abajo) |
+| Marca de agua en GIFs | No implementado — el mecanismo es distinto (dibujado por el cliente, no una URL alternativa del servidor), ver nota abajo |
 | Recordatorio local de streak (no auto-envío) | Implementado, en la app companion (`streak/`) — notificación programada, no automatiza nada dentro de TikTok |
 | Resto de features del mod original (watermark, duet/stitch, CAPTCHA, region...) | No implementadas todavía — se agregan de a una, siguiendo el mismo patrón (`mods/<categoria>/<Feature>Hook.java`) |
 
@@ -70,7 +72,21 @@ public UrlModel downloadNoWatermarkAddr;  // getDownloadNoWatermarkAddr() -> sin
 
 `WatermarkBlocker` hookea `Video.getDownloadAddr()` y, si `getDownloadNoWatermarkAddr()` del mismo objeto no es `null`, reemplaza el resultado por ese valor. No fabrica ninguna URL — solo prioriza el campo que el propio servidor ya manda para este fin. Si un video en particular no trae variante sin marca de agua, el hook no toca nada (se devuelve el resultado original). Verificado idéntico (mismos nombres de clase/campo/getter) en 46.4.3 y 47.0.3.
 
-No cubre fotos ni GIFs (el mod original tenía toggles separados para "Remove Pictures Watermark" / "Remove GIF Watermark") — habría que confirmar si existe un campo `download_no_watermark_addr` equivalente en el modelo de imagen antes de replicarlo ahí.
+## Hook de watermark en fotos (slideshow) — y por qué no cubre GIFs
+
+Se decompiló `com.ss.android.ugc.aweme.feed.model.PhotoModeImageUrlModel` (`classes7.dex` en 47.0.3) — el modelo de los posts de foto/slideshow. Tiene tres campos análogos a los de `Video`, pero **sin getters**:
+
+```java
+@02s3("display_image")          UrlModel displayImageNoWatermark;  // sin marca
+@02s3("owner_watermark_image")  UrlModel ownerWatermarkImage;      // con marca del autor
+@02s3("user_watermark_image")   UrlModel userWatermarkImage;       // con marca del usuario que descarga
+```
+
+Gson asigna estos campos por reflexión directa sobre el campo público (no hay `getDisplayImageNoWatermark()` que hookear). Como Xposed no puede interceptar una lectura de campo, `PhotoWatermarkBlocker` hookea en cambio el método que arma este objeto desde protobuf — `com.ss.android.ugc.tiktok.ConvertHelper.com$ss$ugc$tiktok$proto$ImagePostInfoV2$$com$ss$android$ugc$aweme$feed$model$PhotoModeImageUrlModel(...)` (nombre confirmado idéntico en 46.4.3 y 47.0.3) — y después de que arma el objeto, sobreescribe `ownerWatermarkImage`/`userWatermarkImage` con el valor de `displayImageNoWatermark`.
+
+**Limitación conocida y documentada en el código**: esto cubre el camino protobuf. Si el post se parsea por JSON/Gson normal (que también existe, mismas anotaciones `@02s3`), los campos se asignan por reflexión sin pasar por ningún método — no hay forma de hookear eso con Xposed. Cubrir ese camino necesitaría encontrar el método real de "guardar/compartir foto" que **lee** esos campos (en vez de donde se escriben), que no identifiqué todavía.
+
+**GIFs**: no tiene un campo `..._no_watermark_addr` equivalente — encontramos evidencia (`drawWatermarkToCover`, `getImageWatermarkPath`) de que la marca de agua en GIFs se **dibuja del lado del cliente** (probablemente al renderizar los frames del GIF a partir de un clip de video), no es una URL alternativa que el servidor ya manda. Hookear eso sin verificar bien el punto exacto arriesga corromper visualmente la exportación — se dejó afuera en vez de adivinar.
 
 **Nota de verificación**: no hay entorno Android SDK / emulador / dispositivo en esta máquina, así que el proyecto **no se compiló ni se probó en runtime** todavía. La API exacta de `MethodMatcher`/`FindMethod` de `dexkit:2.0.3` usada en el fallback de `AdBlocker` se escribió según la documentación pública de DexKit, pero hay que confirmarla al abrir el proyecto en Android Studio (primer build) antes de asumir que compila tal cual. Los otros 3 hooks (`AdsIdBlocker`, `AdsMetadataBlocker`, `LocationBlocker`) usan solo la API estándar de Xposed (`XposedHelpers.findAndHookMethod`), sin DexKit.
 
@@ -118,6 +134,7 @@ app/src/main/java/dev/ryan/tikratu/
 ├── mods/tracking/AdsMetadataBlocker.java   # oculta el AdMob App ID
 ├── mods/tracking/LocationBlocker.java      # LocationManager -> null
 ├── mods/media/WatermarkBlocker.java        # getDownloadAddr() -> getDownloadNoWatermarkAddr()
+├── mods/media/PhotoWatermarkBlocker.java    # PhotoModeImageUrlModel: camino protobuf
 ├── streak/StreakReminderScheduler.java     # AlarmManager + SharedPreferences
 ├── streak/StreakReminderReceiver.java      # dispara la notificación
 ├── streak/BootReceiver.java                # re-arma el recordatorio tras reiniciar
