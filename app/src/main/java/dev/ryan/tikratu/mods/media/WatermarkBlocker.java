@@ -23,6 +23,13 @@ import dev.ryan.tikratu.utils.log.ModuleLog;
  * Cubre el flujo de descarga/guardado de VIDEO. No cubre fotos ni GIFs
  * (el mod original tenía toggles separados para eso) — pendiente si se
  * confirma un campo equivalente en el modelo de imagen.
+ *
+ * DIAGNÓSTICO (probando en dispositivo real, 2026-09-27): la descarga
+ * funciona pero el archivo guardado sigue con marca de agua en al menos un
+ * video probado. Se agrega logging detallado por cada llamada para ver si
+ * download_no_watermark_addr viene null para esos videos (server no lo
+ * ofrece) o si el hook simplemente no se está disparando en el flujo real
+ * de guardado.
  */
 public class WatermarkBlocker {
 
@@ -34,8 +41,16 @@ public class WatermarkBlocker {
                     new XC_MethodHook() {
                         @Override
                         protected void afterHookedMethod(MethodHookParam param) {
-                            Object noWatermarkAddr = XposedHelpers.callMethod(
-                                    param.thisObject, "getDownloadNoWatermarkAddr");
+                            Object original = param.getResult();
+                            Object noWatermarkAddr;
+                            try {
+                                noWatermarkAddr = XposedHelpers.callMethod(param.thisObject, "getDownloadNoWatermarkAddr");
+                            } catch (Throwable t) {
+                                ModuleLog.line("(TikRatu | WatermarkBlocker): getDownloadNoWatermarkAddr() fallo: " + t);
+                                return;
+                            }
+                            ModuleLog.line("(TikRatu | WatermarkBlocker): getDownloadAddr() llamado. original="
+                                    + describe(original) + " | noWatermark=" + describe(noWatermarkAddr));
                             if (noWatermarkAddr != null) {
                                 param.setResult(noWatermarkAddr);
                             }
@@ -44,6 +59,17 @@ public class WatermarkBlocker {
             ModuleLog.line("(TikRatu | WatermarkBlocker): hooked " + VIDEO_CLASS + ".getDownloadAddr()");
         } catch (Throwable t) {
             ModuleLog.line("(TikRatu | WatermarkBlocker): fallo el hook (" + t.getMessage() + ")");
+        }
+    }
+
+    private static String describe(Object urlModel) {
+        if (urlModel == null) return "null";
+        try {
+            Object uri = XposedHelpers.callMethod(urlModel, "getUri");
+            Object urlList = XposedHelpers.callMethod(urlModel, "getUrlList");
+            return "uri=" + uri + " urls=" + urlList;
+        } catch (Throwable t) {
+            return "presente (no se pudo describir: " + t.getMessage() + ")";
         }
     }
 }
