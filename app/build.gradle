@@ -25,6 +25,16 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+
+    // Necesario para que libdexkit.so quede extraído a disco en
+    // .../lib/arm64-v8a/ en vez de mapeado dentro del .apk (formato "base.apk!/...")
+    // — System.load() con una ruta absoluta (ver Module.java#loadDexKitNativeLibrary)
+    // sólo funciona sobre un archivo real en disco, no sobre una ruta dentro del zip.
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
 }
 
 dependencies {
