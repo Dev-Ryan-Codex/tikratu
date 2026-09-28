@@ -8,7 +8,7 @@
     <string name="view_features">Ver funciones</string>
     <string name="tiktok_not_installed">TikTok no está instalado en este dispositivo</string>
     <string name="how_to_use_title">Cómo usarlo</string>
-    <string name="how_to_use_body">Activá el módulo en LSPosed Manager, marcá com.zhiliaoapp.musically y dev.ryan.tikratu en su alcance, y reiniciá TikTok. Los cambios de switches necesitan reiniciar TikTok para tomar efecto.</string>
+    <string name="how_to_use_body">Activá el módulo en LSPosed Manager, marcá com.zhiliaoapp.musically y dev.ryan.tikratu en su alcance, y reiniciá TikTok una vez. Después, prender o apagar cualquier función se aplica solo en unos segundos, sin reiniciar TikTok (un video que ya está en pantalla puede necesitar pasar al siguiente para reflejar el cambio).</string>
 
     <string name="section_ads">Anuncios y tracking</string>
     <string name="feature_ad_blocker_title">Quitar anuncios del feed</string>

@@ -10,6 +10,12 @@ Ver [DISCLAIMER.md](DISCLAIMER.md) antes de usarlo.
 
 Nace del análisis de un mod de terceros para TikTok (repack cerrado, re-firmado con certificado ajeno, con protección de código nativo tipo VM) hecho como trabajo de la materia **Protección de Software**. La idea de TikRatu es lograr una funcionalidad similar (por ahora: sacar el flag de "esto es un anuncio" del feed) de forma **abierta, auditable y sin tocar el binario de TikTok**, usando la técnica de hooking en runtime en vez de parchear+re-firmar un APK.
 
+## Cambios en vivo, sin reiniciar (2026-09-28)
+
+Antes cada hook se instalaba (o no) una sola vez al arrancar TikTok según el toggle, así que prender/apagar una opción no tenía efecto hasta reiniciar (reportado con "Dejar de reproducir en bucle": desactivarlo seguía deteniendo el video). Ahora **todos los hooks se instalan siempre** y consultan `RuntimeSettings` en cada disparo. `RuntimeSettings` cachea las prefs en memoria y las refresca en segundo plano cada 2s vía `PrefsProvider`, así que activar/desactivar cualquier función aplica en ~2s **sin reiniciar TikTok**.
+
+Verificado en dispositivo con log de diagnóstico temporal en `setLooping`: con el toggle activo, `setLooping(true) toggle=true -> forzando false`; tras desactivarlo en vivo (sin reiniciar), el mismo hook pasó a `toggle=false -> pass-through`. Los hooks que devolvían una constante (`getTranscode`, `setLooping`, gates de login, callback de captura) se cambiaron a hooks condicionales que respetan el toggle en cada llamada. (Un video que ya está en pantalla puede necesitar pasar al siguiente para reflejar el cambio, porque su reproductor ya fue configurado.)
+
 ## Fix de fondo: los toggles no llegaban a TikTok (2026-09-28)
 
 Probando el primer toggle con default `false` se descubrió que **ningún toggle llegaba de verdad al proceso de TikTok** — los de default `true` solo "funcionaban" por coincidencia con el fallback. Cadena de causas, todas confirmadas en el dispositivo:
