@@ -2,6 +2,8 @@ package dev.ryan.tikratu.mods.ads;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedHelpers;
+import dev.ryan.tikratu.Xposed.RuntimeSettings;
+import dev.ryan.tikratu.utils.Prefs;
 import dev.ryan.tikratu.utils.log.ModuleLog;
 
 /**
@@ -29,7 +31,9 @@ public class AdSignalsBlocker {
         XC_MethodHook returnFalse = new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) {
-                param.setResult(false);
+                if (RuntimeSettings.enabled(Prefs.KEY_AD_SIGNALS_BLOCKER, Prefs.DEFAULT_AD_SIGNALS_BLOCKER)) {
+                    param.setResult(false);
+                }
             }
         };
 

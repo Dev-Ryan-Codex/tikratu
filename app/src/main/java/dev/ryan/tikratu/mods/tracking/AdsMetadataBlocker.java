@@ -6,6 +6,8 @@ import android.os.Bundle;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
+import dev.ryan.tikratu.Xposed.RuntimeSettings;
+import dev.ryan.tikratu.utils.Prefs;
 import dev.ryan.tikratu.utils.log.ModuleLog;
 
 /**
@@ -40,6 +42,7 @@ public class AdsMetadataBlocker {
         XC_MethodHook stripMetadata = new XC_MethodHook() {
             @Override
             protected void afterHookedMethod(MethodHookParam param) {
+                if (!RuntimeSettings.enabled(Prefs.KEY_ADS_METADATA_BLOCKER, Prefs.DEFAULT_ADS_METADATA_BLOCKER)) return;
                 Object result = param.getResult();
                 if (!(result instanceof ApplicationInfo)) return;
                 Bundle metaData = ((ApplicationInfo) result).metaData;

@@ -88,71 +88,28 @@ public class Module implements IXposedHookLoadPackage, IXposedHookZygoteInit {
     }
 
     private void installHooks(XC_LoadPackage.LoadPackageParam lpparam, android.content.Context context) {
-        ModulePrefsReader prefs = new ModulePrefsReader(context);
+        // Estado leido EN VIVO: los hooks se instalan SIEMPRE (una vez) y cada
+        // uno consulta RuntimeSettings en cada disparo. Asi prender/apagar un
+        // toggle aplica sin reiniciar TikTok (con ~2s de retraso, lo que tarda
+        // el refresh del cache). Antes cada hook se instalaba condicionalmente
+        // y el cambio no tomaba efecto hasta reiniciar.
+        RuntimeSettings.init(context);
+        ClassLoader cl = lpparam.classLoader;
 
-        if (prefs.getBoolean(Prefs.KEY_ADS_ID_BLOCKER, Prefs.DEFAULT_ADS_ID_BLOCKER)) {
-            new AdsIdBlocker().block(lpparam.classLoader);
-        }
-        if (prefs.getBoolean(Prefs.KEY_LOCATION_BLOCKER, Prefs.DEFAULT_LOCATION_BLOCKER)) {
-            new LocationBlocker().block(lpparam.classLoader);
-        }
-        if (prefs.getBoolean(Prefs.KEY_ADS_METADATA_BLOCKER, Prefs.DEFAULT_ADS_METADATA_BLOCKER)) {
-            new AdsMetadataBlocker().block(lpparam.classLoader);
-        }
-        if (prefs.getBoolean(Prefs.KEY_WATERMARK_BLOCKER, Prefs.DEFAULT_WATERMARK_BLOCKER)) {
-            new WatermarkBlocker().block(lpparam.classLoader);
-        }
-        if (prefs.getBoolean(Prefs.KEY_PHOTO_WATERMARK_BLOCKER, Prefs.DEFAULT_PHOTO_WATERMARK_BLOCKER)) {
-            new PhotoWatermarkBlocker().block(lpparam.classLoader);
-        }
-        if (prefs.getBoolean(Prefs.KEY_DOWNLOAD_UNLOCK_BLOCKER, Prefs.DEFAULT_DOWNLOAD_UNLOCK_BLOCKER)) {
-            new DownloadUnlockBlocker().block(lpparam.classLoader);
-        }
-        if (prefs.getBoolean(Prefs.KEY_AD_SIGNALS_BLOCKER, Prefs.DEFAULT_AD_SIGNALS_BLOCKER)) {
-            new AdSignalsBlocker().block(lpparam.classLoader);
-        }
-        if (prefs.getBoolean(Prefs.KEY_URL_SANITIZER_BLOCKER, Prefs.DEFAULT_URL_SANITIZER_BLOCKER)) {
-            new UrlSanitizerBlocker().block(lpparam.classLoader);
-        }
-        if (prefs.getBoolean(Prefs.KEY_FONT_STYLE_BLOCKER, Prefs.DEFAULT_FONT_STYLE_BLOCKER)) {
-            new FontStyleBlocker().block(lpparam.classLoader);
-        }
-
-        FeedFilterBlocker feedFilter = new FeedFilterBlocker(
-                prefs.getBoolean(Prefs.KEY_HIDE_LIVE, Prefs.DEFAULT_HIDE_LIVE),
-                prefs.getBoolean(Prefs.KEY_HIDE_STORY, Prefs.DEFAULT_HIDE_STORY),
-                prefs.getBoolean(Prefs.KEY_HIDE_SHOP, Prefs.DEFAULT_HIDE_SHOP),
-                prefs.getBoolean(Prefs.KEY_HIDE_IMAGE, Prefs.DEFAULT_HIDE_IMAGE),
-                prefs.getBoolean(Prefs.KEY_HIDE_PROMOTED_MUSIC, Prefs.DEFAULT_HIDE_PROMOTED_MUSIC),
-                prefs.getLong(Prefs.KEY_MAX_DURATION_SEC, Prefs.DEFAULT_MAX_DURATION_SEC),
-                prefs.getLong(Prefs.KEY_MIN_VIEWS, Prefs.DEFAULT_MIN_VIEWS),
-                prefs.getLong(Prefs.KEY_MIN_LIKES, Prefs.DEFAULT_MIN_LIKES),
-                prefs.getString(Prefs.KEY_CAPTION_BLOCKLIST, Prefs.DEFAULT_CAPTION_BLOCKLIST));
-        if (feedFilter.isActive()) {
-            feedFilter.block(lpparam.classLoader);
-        }
-        if (prefs.getBoolean(Prefs.KEY_STOP_VIDEO_LOOPING, Prefs.DEFAULT_STOP_VIDEO_LOOPING)) {
-            new StopVideoLoopingBlocker().block(lpparam.classLoader);
-        }
-        if (prefs.getBoolean(Prefs.KEY_SCREEN_CAPTURE_BLOCKER, Prefs.DEFAULT_SCREEN_CAPTURE_BLOCKER)) {
-            new ScreenCaptureBlocker().block(lpparam.classLoader);
-        }
-        if (prefs.getBoolean(Prefs.KEY_DISABLE_LOGIN, Prefs.DEFAULT_DISABLE_LOGIN)) {
-            new DisableLoginBlocker().block(lpparam.classLoader);
-        }
-
-        if (prefs.getBoolean(Prefs.KEY_AD_BLOCKER, Prefs.DEFAULT_AD_BLOCKER)) {
-            try {
-                loadDexKitNativeLibrary();
-                try (DexKitBridge bridge = DexKitBridge.create(lpparam.appInfo.sourceDir)) {
-                    new AdBlocker().disableFeedAdFlag(bridge, lpparam.classLoader);
-                    // Proximos hooks (watermark, duet/stitch, etc.) se agregan aca,
-                    // uno por clase en dev.ryan.tikratu.mods.<categoria>, igual que AdBlocker.
-                }
-            } catch (Throwable t) {
-                ModuleLog.line("(TikRatu): error inicializando DexKit: " + t.getMessage());
-            }
-        }
+        new AdBlocker().block(cl);
+        new AdsIdBlocker().block(cl);
+        new AdsMetadataBlocker().block(cl);
+        new LocationBlocker().block(cl);
+        new WatermarkBlocker().block(cl);
+        new PhotoWatermarkBlocker().block(cl);
+        new DownloadUnlockBlocker().block(cl);
+        new AdSignalsBlocker().block(cl);
+        new UrlSanitizerBlocker().block(cl);
+        new FontStyleBlocker().block(cl);
+        new FeedFilterBlocker().block(cl);
+        new StopVideoLoopingBlocker().block(cl);
+        new ScreenCaptureBlocker().block(cl);
+        new DisableLoginBlocker().block(cl);
     }
 
     private static synchronized void loadDexKitNativeLibrary() {

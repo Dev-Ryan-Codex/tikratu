@@ -2,6 +2,8 @@ package dev.ryan.tikratu.mods.media;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedHelpers;
+import dev.ryan.tikratu.Xposed.RuntimeSettings;
+import dev.ryan.tikratu.utils.Prefs;
 import dev.ryan.tikratu.utils.log.ModuleLog;
 
 /**
@@ -25,7 +27,9 @@ public class DownloadUnlockBlocker {
                     new XC_MethodHook() {
                         @Override
                         protected void afterHookedMethod(MethodHookParam param) {
-                            param.setResult(false);
+                            if (RuntimeSettings.enabled(Prefs.KEY_DOWNLOAD_UNLOCK_BLOCKER, Prefs.DEFAULT_DOWNLOAD_UNLOCK_BLOCKER)) {
+                                param.setResult(false);
+                            }
                         }
                     });
             ModuleLog.line("(TikRatu | DownloadUnlockBlocker): hooked " + AWEME_CLASS + ".isPreventDownload()");

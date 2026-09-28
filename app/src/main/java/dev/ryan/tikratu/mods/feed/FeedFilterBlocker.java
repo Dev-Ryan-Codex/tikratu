@@ -7,6 +7,8 @@ import java.util.Locale;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
+import dev.ryan.tikratu.Xposed.RuntimeSettings;
+import dev.ryan.tikratu.utils.Prefs;
 import dev.ryan.tikratu.utils.log.ModuleLog;
 
 /**
@@ -47,38 +49,21 @@ public class FeedFilterBlocker {
     private static final int AWEME_TYPE_LIVE = 101;
     private static final String SHOP_MARKER = "placeholder_product_id";
 
-    private final boolean hideLive;
-    private final boolean hideStory;
-    private final boolean hideShop;
-    private final boolean hideImage;
-    private final boolean hidePromotedMusic;
-    private final long maxDurationSec;
-    private final long minViews;
-    private final long minLikes;
-    private final List<String> blockWords = new ArrayList<>();
+    // Los criterios se leen EN VIVO en cada disparo (RuntimeSettings), no se
+    // cachean en el constructor — así prender/apagar cualquier filtro aplica
+    // sin reiniciar TikTok. El hook se instala siempre; si no hay ningún
+    // criterio activo, filterList no saca nada.
 
-    public FeedFilterBlocker(boolean hideLive, boolean hideStory, boolean hideShop, boolean hideImage,
-                             boolean hidePromotedMusic, long maxDurationSec, long minViews, long minLikes,
-                             String captionBlocklist) {
-        this.hideLive = hideLive;
-        this.hideStory = hideStory;
-        this.hideShop = hideShop;
-        this.hideImage = hideImage;
-        this.hidePromotedMusic = hidePromotedMusic;
-        this.maxDurationSec = maxDurationSec;
-        this.minViews = minViews;
-        this.minLikes = minLikes;
-        if (captionBlocklist != null) {
-            for (String word : captionBlocklist.split(",")) {
-                String w = word.trim().toLowerCase(Locale.ROOT);
-                if (!w.isEmpty()) blockWords.add(w);
-            }
-        }
-    }
-
-    public boolean isActive() {
-        return hideLive || hideStory || hideShop || hideImage || hidePromotedMusic
-                || maxDurationSec > 0 || minViews > 0 || minLikes > 0 || !blockWords.isEmpty();
+    private static boolean anyActive() {
+        return RuntimeSettings.enabled(Prefs.KEY_HIDE_LIVE, Prefs.DEFAULT_HIDE_LIVE)
+                || RuntimeSettings.enabled(Prefs.KEY_HIDE_STORY, Prefs.DEFAULT_HIDE_STORY)
+                || RuntimeSettings.enabled(Prefs.KEY_HIDE_SHOP, Prefs.DEFAULT_HIDE_SHOP)
+                || RuntimeSettings.enabled(Prefs.KEY_HIDE_IMAGE, Prefs.DEFAULT_HIDE_IMAGE)
+                || RuntimeSettings.enabled(Prefs.KEY_HIDE_PROMOTED_MUSIC, Prefs.DEFAULT_HIDE_PROMOTED_MUSIC)
+                || RuntimeSettings.getLong(Prefs.KEY_MAX_DURATION_SEC, Prefs.DEFAULT_MAX_DURATION_SEC) > 0
+                || RuntimeSettings.getLong(Prefs.KEY_MIN_VIEWS, Prefs.DEFAULT_MIN_VIEWS) > 0
+                || RuntimeSettings.getLong(Prefs.KEY_MIN_LIKES, Prefs.DEFAULT_MIN_LIKES) > 0
+                || !RuntimeSettings.getString(Prefs.KEY_CAPTION_BLOCKLIST, Prefs.DEFAULT_CAPTION_BLOCKLIST).trim().isEmpty();
     }
 
     public void block(ClassLoader classLoader) {
@@ -108,6 +93,7 @@ public class FeedFilterBlocker {
                     // veces por lote. Se limpia el campo de origen una vez (las
                     // llamadas siguientes ya no encuentran nada que sacar) y se
                     // filtra tambien el valor devuelto por si ya era una copia.
+                    if (!anyActive()) return;
                     filterFeedItemList(param.thisObject);
                     Object result = param.getResult();
                     if (result instanceof List) {
@@ -123,7 +109,7 @@ public class FeedFilterBlocker {
     }
 
     private void filterFeedItemList(Object feedItemList) {
-        if (feedItemList == null) return;
+        if (feedItemList == null || !anyActive()) return;
         try {
             Object raw = XposedHelpers.getObjectField(feedItemList, "items");
             if (!(raw instanceof List)) return;
@@ -153,12 +139,17 @@ public class FeedFilterBlocker {
     }
 
     private boolean shouldHide(Object aweme) {
-        if (hideLive && isLive(aweme)) return true;
-        if (hideStory && bool(aweme, "getIsTikTokStory")) return true;
-        if (hideShop && isShop(aweme)) return true;
-        if (hideImage && isImage(aweme)) return true;
-        if (hidePromotedMusic && bool(aweme, "isWithPromotionalMusic")) return true;
+        if (RuntimeSettings.enabled(Prefs.KEY_HIDE_LIVE, Prefs.DEFAULT_HIDE_LIVE) && isLive(aweme)) return true;
+        if (RuntimeSettings.enabled(Prefs.KEY_HIDE_STORY, Prefs.DEFAULT_HIDE_STORY) && bool(aweme, "getIsTikTokStory")) return true;
+        if (RuntimeSettings.enabled(Prefs.KEY_HIDE_SHOP, Prefs.DEFAULT_HIDE_SHOP) && isShop(aweme)) return true;
+        if (RuntimeSettings.enabled(Prefs.KEY_HIDE_IMAGE, Prefs.DEFAULT_HIDE_IMAGE) && isImage(aweme)) return true;
+        if (RuntimeSettings.enabled(Prefs.KEY_HIDE_PROMOTED_MUSIC, Prefs.DEFAULT_HIDE_PROMOTED_MUSIC) && bool(aweme, "isWithPromotionalMusic")) return true;
+
+        long maxDurationSec = RuntimeSettings.getLong(Prefs.KEY_MAX_DURATION_SEC, Prefs.DEFAULT_MAX_DURATION_SEC);
         if (maxDurationSec > 0 && isLongerThan(aweme, maxDurationSec)) return true;
+
+        long minViews = RuntimeSettings.getLong(Prefs.KEY_MIN_VIEWS, Prefs.DEFAULT_MIN_VIEWS);
+        long minLikes = RuntimeSettings.getLong(Prefs.KEY_MIN_LIKES, Prefs.DEFAULT_MIN_LIKES);
         if (minViews > 0 || minLikes > 0) {
             Object stats = call(aweme, "getStatistics");
             if (stats != null) {
@@ -166,12 +157,15 @@ public class FeedFilterBlocker {
                 if (minLikes > 0 && num(stats, "getDiggCount") < minLikes) return true;
             }
         }
-        if (!blockWords.isEmpty()) {
+
+        String blocklist = RuntimeSettings.getString(Prefs.KEY_CAPTION_BLOCKLIST, Prefs.DEFAULT_CAPTION_BLOCKLIST);
+        if (!blocklist.trim().isEmpty()) {
             Object desc = call(aweme, "getDesc");
             if (desc instanceof String) {
                 String lower = ((String) desc).toLowerCase(Locale.ROOT);
-                for (String w : blockWords) {
-                    if (lower.contains(w)) return true;
+                for (String w : blocklist.split(",")) {
+                    String word = w.trim().toLowerCase(Locale.ROOT);
+                    if (!word.isEmpty() && lower.contains(word)) return true;
                 }
             }
         }

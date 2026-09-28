@@ -2,6 +2,8 @@ package dev.ryan.tikratu.mods.interaction;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedHelpers;
+import dev.ryan.tikratu.Xposed.RuntimeSettings;
+import dev.ryan.tikratu.utils.Prefs;
 import dev.ryan.tikratu.utils.log.ModuleLog;
 
 /**
@@ -26,7 +28,9 @@ public class StopVideoLoopingBlocker {
                     new XC_MethodHook() {
                         @Override
                         protected void beforeHookedMethod(MethodHookParam param) {
-                            param.args[0] = false;
+                            if (RuntimeSettings.enabled(Prefs.KEY_STOP_VIDEO_LOOPING, Prefs.DEFAULT_STOP_VIDEO_LOOPING)) {
+                                param.args[0] = false;
+                            }
                         }
                     });
             ModuleLog.line("(TikRatu | StopVideoLoopingBlocker): hooked " + VIDEO_ENGINE_CLASS + ".setLooping(boolean)");

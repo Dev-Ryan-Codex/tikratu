@@ -2,6 +2,8 @@ package dev.ryan.tikratu.mods.tracking;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedHelpers;
+import dev.ryan.tikratu.Xposed.RuntimeSettings;
+import dev.ryan.tikratu.utils.Prefs;
 import dev.ryan.tikratu.utils.log.ModuleLog;
 
 /**
@@ -28,7 +30,9 @@ public class AdsIdBlocker {
             XposedHelpers.findAndHookMethod(INFO_CLASS, classLoader, "getId", new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) {
-                    param.setResult(ZERO_UUID);
+                    if (RuntimeSettings.enabled(Prefs.KEY_ADS_ID_BLOCKER, Prefs.DEFAULT_ADS_ID_BLOCKER)) {
+                        param.setResult(ZERO_UUID);
+                    }
                 }
             });
             ModuleLog.line("(TikRatu | AdsIdBlocker): hooked AdvertisingIdClient.Info.getId() -> UUID cero");
@@ -41,7 +45,9 @@ public class AdsIdBlocker {
             XposedHelpers.findAndHookMethod(INFO_CLASS, classLoader, "isLimitAdTrackingEnabled", new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) {
-                    param.setResult(true);
+                    if (RuntimeSettings.enabled(Prefs.KEY_ADS_ID_BLOCKER, Prefs.DEFAULT_ADS_ID_BLOCKER)) {
+                        param.setResult(true);
+                    }
                 }
             });
             ModuleLog.line("(TikRatu | AdsIdBlocker): hooked isLimitAdTrackingEnabled() -> true");

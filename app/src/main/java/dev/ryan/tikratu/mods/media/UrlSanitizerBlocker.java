@@ -8,6 +8,8 @@ import java.util.regex.Pattern;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedHelpers;
+import dev.ryan.tikratu.Xposed.RuntimeSettings;
+import dev.ryan.tikratu.utils.Prefs;
 import dev.ryan.tikratu.utils.log.ModuleLog;
 
 /**
@@ -43,6 +45,7 @@ public class UrlSanitizerBlocker {
                     ClipData.class, new XC_MethodHook() {
                         @Override
                         protected void beforeHookedMethod(MethodHookParam param) {
+                            if (!RuntimeSettings.enabled(Prefs.KEY_URL_SANITIZER_BLOCKER, Prefs.DEFAULT_URL_SANITIZER_BLOCKER)) return;
                             ClipData clip = (ClipData) param.args[0];
                             if (clip == null || clip.getItemCount() == 0) return;
                             CharSequence original = clip.getItemAt(0).getText();

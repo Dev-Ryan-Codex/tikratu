@@ -4,6 +4,8 @@ import android.location.LocationManager;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedHelpers;
+import dev.ryan.tikratu.Xposed.RuntimeSettings;
+import dev.ryan.tikratu.utils.Prefs;
 import dev.ryan.tikratu.utils.log.ModuleLog;
 
 /**
@@ -29,7 +31,9 @@ public class LocationBlocker {
                     new XC_MethodHook() {
                         @Override
                         protected void afterHookedMethod(MethodHookParam param) {
-                            param.setResult(null);
+                            if (RuntimeSettings.enabled(Prefs.KEY_LOCATION_BLOCKER, Prefs.DEFAULT_LOCATION_BLOCKER)) {
+                                param.setResult(null);
+                            }
                         }
                     });
             ModuleLog.line("(TikRatu | LocationBlocker): hooked LocationManager.getLastKnownLocation");

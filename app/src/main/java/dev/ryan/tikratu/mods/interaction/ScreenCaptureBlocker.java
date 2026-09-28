@@ -4,8 +4,10 @@ import android.app.Activity;
 
 import java.lang.reflect.Method;
 
-import de.robv.android.xposed.XC_MethodReplacement;
+import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
+import dev.ryan.tikratu.Xposed.RuntimeSettings;
+import dev.ryan.tikratu.utils.Prefs;
 import dev.ryan.tikratu.utils.log.ModuleLog;
 
 /**
@@ -33,7 +35,14 @@ public class ScreenCaptureBlocker {
             String name = method.getName();
             if (name.equals("registerScreenCaptureCallback") || name.equals("unregisterScreenCaptureCallback")) {
                 try {
-                    XposedBridge.hookMethod(method, XC_MethodReplacement.returnConstant(null));
+                    XposedBridge.hookMethod(method, new XC_MethodHook() {
+                        @Override
+                        protected void beforeHookedMethod(MethodHookParam param) {
+                            if (RuntimeSettings.enabled(Prefs.KEY_SCREEN_CAPTURE_BLOCKER, Prefs.DEFAULT_SCREEN_CAPTURE_BLOCKER)) {
+                                param.setResult(null);
+                            }
+                        }
+                    });
                     hooked++;
                 } catch (Throwable t) {
                     ModuleLog.line("(TikRatu | ScreenCaptureBlocker): fallo hook " + name + " (" + t.getMessage() + ")");

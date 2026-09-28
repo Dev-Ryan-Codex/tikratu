@@ -5,6 +5,8 @@ import android.graphics.Typeface;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedHelpers;
+import dev.ryan.tikratu.Xposed.RuntimeSettings;
+import dev.ryan.tikratu.utils.Prefs;
 import dev.ryan.tikratu.utils.log.ModuleLog;
 
 /**
@@ -31,6 +33,7 @@ public class FontStyleBlocker {
                     AssetManager.class, String.class, new XC_MethodHook() {
                         @Override
                         protected void afterHookedMethod(MethodHookParam param) {
+                            if (!RuntimeSettings.enabled(Prefs.KEY_FONT_STYLE_BLOCKER, Prefs.DEFAULT_FONT_STYLE_BLOCKER)) return;
                             Object path = param.args[1];
                             if (path instanceof String && ((String) path).contains("TikTokSans")) {
                                 param.setResult(Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL));

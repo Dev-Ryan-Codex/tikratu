@@ -11,8 +11,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XC_MethodReplacement;
 import de.robv.android.xposed.XposedHelpers;
+import dev.ryan.tikratu.Xposed.RuntimeSettings;
+import dev.ryan.tikratu.utils.Prefs;
 import dev.ryan.tikratu.utils.log.ModuleLog;
 
 /**
@@ -122,7 +123,14 @@ public class WatermarkBlocker {
         // 47.0.3 (ACLCommonShare.java: "public int transcode = 3", getTranscode()).
         try {
             XposedHelpers.findAndHookMethod(ACL_COMMON_SHARE_CLASS, classLoader, "getTranscode",
-                    XC_MethodReplacement.returnConstant(TRANSCODE_NO_WATERMARK));
+                    new XC_MethodHook() {
+                        @Override
+                        protected void afterHookedMethod(MethodHookParam param) {
+                            if (RuntimeSettings.enabled(Prefs.KEY_WATERMARK_BLOCKER, Prefs.DEFAULT_WATERMARK_BLOCKER)) {
+                                param.setResult(TRANSCODE_NO_WATERMARK);
+                            }
+                        }
+                    });
             ModuleLog.line("(TikRatu | WatermarkBlocker): hooked " + ACL_COMMON_SHARE_CLASS + ".getTranscode() -> " + TRANSCODE_NO_WATERMARK);
         } catch (Throwable t) {
             ModuleLog.line("(TikRatu | WatermarkBlocker): no se pudo hookear getTranscode (" + t.getMessage() + ")");
@@ -154,6 +162,7 @@ public class WatermarkBlocker {
                     new XC_MethodHook() {
                         @Override
                         protected void afterHookedMethod(MethodHookParam param) {
+                            if (!RuntimeSettings.enabled(Prefs.KEY_WATERMARK_BLOCKER, Prefs.DEFAULT_WATERMARK_BLOCKER)) return;
                             Object original = param.getResult();
                             Object video = param.thisObject;
 

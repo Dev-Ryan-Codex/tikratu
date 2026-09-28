@@ -2,9 +2,11 @@ package dev.ryan.tikratu.mods.interaction;
 
 import java.lang.reflect.Method;
 
-import de.robv.android.xposed.XC_MethodReplacement;
+import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
+import dev.ryan.tikratu.Xposed.RuntimeSettings;
+import dev.ryan.tikratu.utils.Prefs;
 import dev.ryan.tikratu.utils.log.ModuleLog;
 
 /**
@@ -38,7 +40,14 @@ public class DisableLoginBlocker {
             if (!isGate) continue;
             if (m.getReturnType() != boolean.class || m.getParameterCount() != 1) continue;
             try {
-                XposedBridge.hookMethod(m, XC_MethodReplacement.returnConstant(false));
+                XposedBridge.hookMethod(m, new XC_MethodHook() {
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param) {
+                        if (RuntimeSettings.enabled(Prefs.KEY_DISABLE_LOGIN, Prefs.DEFAULT_DISABLE_LOGIN)) {
+                            param.setResult(false);
+                        }
+                    }
+                });
                 hooked++;
             } catch (Throwable t) {
                 ModuleLog.line("(TikRatu | DisableLoginBlocker): fallo hook " + m.getName() + " (" + t.getMessage() + ")");
