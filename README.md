@@ -37,25 +37,20 @@ Del "TikTok Plugin" de las capturas (`C:\Audit\equipos\tiktok apk\img tiktok plu
 - Renovación automática de la racha -> `StreakReminderScheduler` (versión acotada: solo recordatorio local, no auto-envío — ver "Por qué NO se replicaron otros hallazgos")
 - Descargar video/foto sin marca -> `WatermarkBlocker`/`PhotoWatermarkBlocker` (rotos hoy, ver sección dedicada)
 
-**Investigado a fondo, sin resultado (2026-09-28)** — filtro a nivel de *adaptador de feed*: se usó DexKit en runtime (no solo grep sobre código decompilado) para buscar, en el .dex completo del APK instalado, quién invoca cada predicado de tipo (`isTikTokStory`: 0 callers: `isPhotoMode`: 230 callers, `isLiveNoDeduplicateClient`: 1, `isCard`: 4) y por separado quién invoca `Aweme.getAwemeType()` (467 callers). En ambos casos, revisando los callers con firma de lista/colección (candidatos más probables a ser un "filtro que arma la lista del feed"), **ningún resultado se distingue de forma clara** — son todos renderizado de componentes individuales del feed (`FeedAvatarLiveAssem`, `VideoDiggVM`, `VideoMusicBaseVM`, `VideoShareViewModel`, etc.) o lógica de mensajería/comentarios/búsqueda no relacionada, todo en paquetes completamente ofuscados (`X.XXXX`) sin ninguna señal adicional para diferenciar el candidato correcto entre cientos. Se agotaron las vías estáticas (grep) y dinámicas (DexKit) razonables sin converger — encontrar este punto real requeriría instrumentación más profunda (breakpoints con stack trace en tiempo real vía debugger, no solo búsqueda por firma) que excede el alcance de esta sesión. Quedan pendientes:
-- Quitar directos (ocultar LIVE en Para ti)
-- Eliminar presentación (ocultar posts photo-mode/slideshow del feed)
-- Ocultar los videos de la Tienda de TikTok (Shop)
-- Remove Recommendations
-- Quitar historias (Stories)
-- Ocultar publicaciones largas (por duración, `Video.getDuration()` ya confirmado existente)
-- Filtrar por Vistas y Me gusta
-- Lista de bloqueo de descripción (caption blocklist)
+**Resueltas después vía el filtro de feed** (ver §"Filtro de feed" arriba — el punto de hook correcto salió de los parches ReVanced/Morphe, no de la búsqueda a ciegas de callers de predicados de tipo que se había intentado antes sin éxito):
+- Quitar directos (LIVE) · Quitar historias · Ocultar Tienda (Shop) · Eliminar presentación (fotos) · Ocultar publicaciones largas · Filtrar por vistas · Filtrar por me gusta · Lista de bloqueo de descripción
+- `Dejar de reproducir en bucle` → `StopVideoLoopingBlocker` (hook a `TTVideoEngine.setLooping`, punto del parche "Stop video looping" de Morphe)
+- `Estilo de fuente` → `FontStyleBlocker` (hook a `Typeface.createFromAsset`)
 
-**Pendientes, requieren su propia investigación (no el filtro de feed)**:
+**Pendientes, punto de hook ya identificado (de los parches Morphe/SexAlloy) pero no implementado — requieren prueba en vivo que no se pudo hacer**:
+- Ocultar CAPTCHA — puntos reales: métodos que contienen los strings `popCaptchaV2 - riskInfo = ` y `popCaptcha - errorcode = ` (confirmados en `classes3.dex` de 47.0.3) + callbacks de `SecCaptcha.onFail`. Es frágil (el propio SexAlloy lo deja apagado por defecto porque puede colgar flujos de login legítimos), por eso no se implementó sin poder verificarlo en el dispositivo.
+- Remove Tako AI — clase `com.ss.android.ugc.aweme.feed.assem.tikbot.TakoAssem` (confirmada en strings de 47.0.3).
+- Always Show Publish Date — requiere parcheo de bytecode (5 "gates" en `VideoAuthorInfoVM`), no se traduce limpio a un hook de runtime puro.
+
+**Pendientes, requieren su propia investigación**:
 - Región / Forzar modo de región
-- Remove Pendant Banners / Remove Tako AI (elementos de UI específicos, no flags de datos)
-- Dejar de reproducir en bucle (hook del lifecycle del reproductor, no del modelo)
-- Always Show Publish Date (formateo de fecha, no encontrado un formatter estable — ver intento previo)
-- Estilo de fuente (Typeface factory)
+- Remove Pendant Banners (elemento de UI específico)
 - Quitar anuncios de pestaña Siguiente/Search/Explorar (podrían depender de las mismas señales `isAd`/`isSoftAd` ya cubiertas, o tener flags propios por pestaña — no verificado)
-
-**Descartada**: Hide CAPTCHA popups (ver "Features descartadas por falta de hook seguro").
 
 **N/A — específico de la propia app companion re-firmada del plugin, sin equivalente en nuestra arquitectura de hook puro**: Actualizar al privado (modelo freemium), Download Via MAX, Ruta de descargas de vídeos/imágenes (elegimos no interceptar el guardado de archivos), Modo nocturno, Idioma, TikTok Web, Corregir enlaces del navegador, Inicio de sesión de emergencia, Cargar configuración desde TikTok, Restablecer/Copia de seguridad/Restaurar, Aplicaciones predeterminadas, Botón flotante, Telegram Channel.
 
