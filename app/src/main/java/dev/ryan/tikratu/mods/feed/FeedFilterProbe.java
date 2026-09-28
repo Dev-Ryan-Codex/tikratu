@@ -28,32 +28,33 @@ import dev.ryan.tikratu.utils.log.ModuleLog;
  */
 public class FeedFilterProbe {
 
-    private static final String AWEME_EXT_CLASS = "com.ss.android.ugc.aweme.feed.model.AwemeExtKt";
-    private static final String[] TARGET_PREDICATES = {
-            "isTikTokStory", "isPhotoMode", "isImage", "isLiveNoDeduplicateClient", "isCard"
-    };
+    private static final String AWEME_CLASS = "com.ss.android.ugc.aweme.feed.model.Aweme";
 
     public void probe(DexKitBridge bridge) {
-        for (String predicate : TARGET_PREDICATES) {
-            try {
-                MethodMatcher target = MethodMatcher.create()
-                        .declaredClass(AWEME_EXT_CLASS)
-                        .name(predicate);
+        try {
+            MethodMatcher target = MethodMatcher.create()
+                    .declaredClass(AWEME_CLASS)
+                    .name("getAwemeType");
 
-                List<MethodData> callers = bridge.findMethod(FindMethod.create().matcher(
-                        MethodMatcher.create().invokeMethods(
-                                MethodsMatcher.create().add(target).matchType(MatchType.Contains)
-                        )
-                ));
+            List<MethodData> callers = bridge.findMethod(FindMethod.create().matcher(
+                    MethodMatcher.create().invokeMethods(
+                            MethodsMatcher.create().add(target).matchType(MatchType.Contains)
+                    )
+            ));
 
-                ModuleLog.line("(TikRatu | FeedFilterProbe): " + predicate + " -> " + callers.size() + " callers");
-                for (MethodData caller : callers) {
-                    ModuleLog.line("(TikRatu | FeedFilterProbe):   " + caller.getClassName() + "." + caller.getName()
-                            + " " + caller.getMethodSign());
+            ModuleLog.line("(TikRatu | FeedFilterProbe): getAwemeType -> " + callers.size() + " callers");
+            for (MethodData caller : callers) {
+                // Solo nos interesan los que además reciben/devuelven una lista o
+                // colección (forma típica de un filtro que arma/depura el feed).
+                String sign = caller.getMethodSign();
+                if (sign != null && (sign.contains("Ljava/util/List") || sign.contains("Ljava/util/Collection")
+                        || sign.contains("Ljava/util/Iterator"))) {
+                    ModuleLog.line("(TikRatu | FeedFilterProbe):   [LIST] " + caller.getClassName() + "." + caller.getName()
+                            + " " + sign);
                 }
-            } catch (Throwable t) {
-                ModuleLog.line("(TikRatu | FeedFilterProbe): fallo buscando callers de " + predicate + " (" + t + ")");
             }
+        } catch (Throwable t) {
+            ModuleLog.line("(TikRatu | FeedFilterProbe): fallo buscando callers de getAwemeType (" + t + ")");
         }
     }
 }
