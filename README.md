@@ -16,7 +16,7 @@ Columna "Estado real" = confirmado con logs de un dispositivo real (Android 16 /
 
 | Feature | Estado real (dispositivo) |
 |---|---|
-| Quitar el flag "es anuncio" del feed (`AdBlocker`) | 🔴 **Roto** — DexKit nunca inicializa (`UnsatisfiedLinkError` en su librería nativa), el hook ni se instala |
+| Quitar el flag "es anuncio" del feed (`AdBlocker`) | 🟢 **Arreglado y confirmado en dispositivo real (2026-09-27)** — DexKit carga y `Aweme.isAd()` se hookea directo (ver detalle abajo) |
 | Bloquear Advertising ID / GAID (`AdsIdBlocker`) | 🟡 No-op en este dispositivo (LineageOS sin Play Services con esa librería) — sin verificar en un device con Play Services real |
 | Ocultar el App ID de AdMob (`AdsMetadataBlocker`) | 🔴 **Roto** — el hook falla al instalarse (`Bundle#getString` no hookeable en este build/Android 16) |
 | Anular `LocationManager.getLastKnownLocation()` (`LocationBlocker`) | 🟢 Se instala correctamente (no se verificó el efecto en runtime, solo la instalación del hook) |
@@ -24,8 +24,8 @@ Columna "Estado real" = confirmado con logs de un dispositivo real (Android 16 /
 | Descargar foto (slideshow) sin marca de agua (`PhotoWatermarkBlocker`) | ⚪ Se instala correctamente — no probado todavía con un post de foto real |
 | Marca de agua en GIFs | No implementado — el mecanismo es distinto (dibujado por el cliente, no una URL alternativa del servidor) |
 | Recordatorio local de streak (no auto-envío) | ⚪ No probado en este dispositivo todavía |
-| Forzar descarga habilitada (`DownloadUnlockBlocker`) | ⚪ Código completo, no probado todavía en dispositivo (pendiente de build+install) |
-| Anuncios encubiertos: `isSoftAd`/`isPseudoAd`/`isSearchPreciseAd` (`AdSignalsBlocker`) | ⚪ Código completo, no probado todavía en dispositivo (pendiente de build+install) |
+| Forzar descarga habilitada (`DownloadUnlockBlocker`) | 🟢 Se instala correctamente en dispositivo real (no se verificó el efecto en un post con `preventDownload=true`, solo la instalación del hook) |
+| Anuncios encubiertos: `isSoftAd`/`isPseudoAd`/`isSearchPreciseAd` (`AdSignalsBlocker`) | 🟢 Se instala correctamente en dispositivo real (no se verificó el efecto visual, solo la instalación de los 3 hooks) |
 | Ocultar CAPTCHA (`hideCaptcha` del plugin original) | ❌ **Descartado** — ver "Features descartadas por falta de hook seguro" |
 | Ocultar tipos de contenido del feed (stories/shop/recomendaciones/live) | Pendiente — requiere ubicar el filtro a nivel de adaptador de feed, no el getter de tipo (ver nota de seguridad más abajo) |
 | Resto de features del mod original (duet/stitch, filtros de feed, region, UI...) | No implementadas todavía — se agregan de a una, siguiendo el mismo patrón (`mods/<categoria>/<Feature>Hook.java`) |
@@ -44,8 +44,17 @@ Primera vez que el módulo se probó en un teléfono real (Android 16, LineageOS
 
 De paso, esta sesión de pruebas destapó **dos hooks que directamente no funcionan** en este dispositivo, no relacionados con el reporte original:
 
-- **`AdBlocker` nunca se activa**: `DexKitBridge.create()` tira `UnsatisfiedLinkError` (`No implementation found for ... nativeInitDexKit`) — la librería nativa de DexKit no está cargando en el APK de debug compilado por CI. Pendiente de investigar el empaquetado (probablemente falta configurar `ndk.abiFilters`/`jniLibs` en `app/build.gradle`, o el AAR de dexkit no se está mergeando bien).
+- **`AdBlocker` nunca se activa** (ver "Fix de DexKit" abajo — ya resuelto en una sesión posterior).
 - **`AdsMetadataBlocker` falla al instalarse**: `XposedHelpers.findAndHookMethod` sobre `Bundle#getString(String)` tira error en este Android 16 — puede que ART haya empezado a tratar ese método de forma especial (demasiado caliente/inlineable) y LSPosed no pueda hookearlo ahí.
+
+### Fix de DexKit (root cause completo, dos capas)
+
+`DexKitBridge.create()` tiraba `UnsatisfiedLinkError: No implementation found for ... nativeInitDexKit`. Se descartó primero un problema de empaquetado/símbolos (`radare2` confirmó que `libdexkit.so` sí estaba en las 4 ABIs del APK con el símbolo exportado correcto) — la causa real es que código Xposed inyectado en el proceso de TikTok no resuelve automáticamente la carpeta de libs nativas del propio módulo. Se implementó `IXposedHookZygoteInit.initZygote()` (captura `StartupParam.modulePath`) + `System.load()` explícito, siguiendo el mismo patrón que usa InstaEclipse. Verificar esto en dispositivo real destapó **dos bugs adicionales, uno arriba del otro**:
+
+1. **Las libs nativas no se extraían a disco**: `nativeloader` mostraba `library_path=.../base.apk!/lib/arm64-v8a` (formato `!/` = mapeada dentro del `.apk`, sin extraer), así que cualquier ruta de archivo real fallaba con `dlopen failed: ... not found`. **Fix**: `packaging { jniLibs { useLegacyPackaging = true } } }` en `app/build.gradle` (AGP 8.7.0) — sin esto, AGP empaqueta las libs comprimidas/alineadas a página para mmap directo desde el ZIP, que es el comportamiento por defecto desde hace varias versiones de AGP.
+2. **El nombre de la carpeta ABI no es el que devuelve `Build.SUPPORTED_ABIS[0]`**: incluso con `useLegacyPackaging` activado, `System.load(...+"/lib/arm64-v8a/libdexkit.so")` seguía fallando. Verificado con `adb shell find` sobre el directorio de instalación real: `PackageManager` extrajo la lib bajo `lib/arm64/`, **no** `lib/arm64-v8a/` (nombre de carpeta abreviado en este dispositivo — LineageOS + KernelSU Next). **Fix**: en vez de construir el nombre de carpeta a partir de `Build.SUPPORTED_ABIS[0]`, se lista el contenido real de `<apkDir>/lib/` con `File.listFiles()` y se usa la única carpeta que aparece — no depende de ninguna tabla de mapeo ABI→nombre-de-carpeta que pueda variar por vendor/versión de Android.
+
+Confirmado con logcat en frío (2026-09-27, misma sesión): `(TikRatu): libdexkit.so cargado desde .../lib/arm64` seguido de `(TikRatu | AdBlocker): hooked directo -> Aweme.isAd()`.
 
 **Herramientas instaladas en esta máquina durante la sesión** (quedan disponibles para la próxima): `adb` (Android Platform Tools, vía winget) y `ffmpeg` (para extraer frames de video y verificar visualmente el resultado de los downloads).
 
