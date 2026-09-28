@@ -78,13 +78,13 @@ public class Module implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                 new XC_MethodHook() {
                     @Override
                     protected void afterHookedMethod(MethodHookParam param) {
-                        installHooks(lpparam);
+                        installHooks(lpparam, (android.content.Context) param.thisObject);
                     }
                 });
     }
 
-    private void installHooks(XC_LoadPackage.LoadPackageParam lpparam) {
-        ModulePrefsReader prefs = new ModulePrefsReader();
+    private void installHooks(XC_LoadPackage.LoadPackageParam lpparam, android.content.Context context) {
+        ModulePrefsReader prefs = new ModulePrefsReader(context);
 
         if (prefs.getBoolean(Prefs.KEY_ADS_ID_BLOCKER, Prefs.DEFAULT_ADS_ID_BLOCKER)) {
             new AdsIdBlocker().block(lpparam.classLoader);

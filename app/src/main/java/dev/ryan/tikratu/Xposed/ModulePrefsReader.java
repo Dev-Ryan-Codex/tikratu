@@ -1,6 +1,5 @@
 package dev.ryan.tikratu.Xposed;
 
-import android.app.AndroidAppHelper;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
@@ -24,11 +23,15 @@ final class ModulePrefsReader {
     private static final String AUTHORITY = "dev.ryan.tikratu.prefs";
     private final Map<String, String> values = new HashMap<>();
 
-    ModulePrefsReader() {
+    // Recibe el Context explicito: AndroidAppHelper.currentApplication() lee
+    // ActivityThread.mInitialApplication, que Android setea DESPUES de que
+    // Application.attach() retorna — confirmado en dispositivo real que es
+    // null incluso dentro del hook de attach(). La propia instancia de
+    // Application (param.thisObject en ese hook) ya tiene su base Context.
+    ModulePrefsReader(Context context) {
         try {
-            Context context = AndroidAppHelper.currentApplication();
             if (context == null) {
-                ModuleLog.line("(TikRatu): AndroidAppHelper.currentApplication() es null — se usan los valores por defecto de cada feature");
+                ModuleLog.line("(TikRatu): Context null — se usan los valores por defecto de cada feature");
                 return;
             }
             Uri uri = Uri.parse("content://" + AUTHORITY + "/all");
