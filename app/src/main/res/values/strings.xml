@@ -24,6 +24,10 @@
     <string name="feature_url_sanitizer_title">Limpiar links copiados</string>
     <string name="feature_url_sanitizer_desc">Quita parámetros de tracking (utm_*, ttclid, etc.) al copiar un enlace de TikTok</string>
 
+    <string name="section_ui">Interfaz</string>
+    <string name="feature_font_style_title">Fuente del sistema</string>
+    <string name="feature_font_style_desc">Reemplaza TikTok Sans (font/TikTokSans-VF.otf) por la fuente sans-serif del sistema</string>
+
     <string name="section_media">Media</string>
     <string name="feature_watermark_title">Video sin marca de agua</string>
     <string name="feature_watermark_desc">Probado con tikwm.com (terceros) y swap de campo propio: ninguno funciona hoy, el archivo sigue con marca — ver README</string>

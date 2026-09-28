@@ -19,6 +19,7 @@ import dev.ryan.tikratu.mods.media.DownloadUnlockBlocker;
 import dev.ryan.tikratu.mods.media.PhotoWatermarkBlocker;
 import dev.ryan.tikratu.mods.media.UrlSanitizerBlocker;
 import dev.ryan.tikratu.mods.media.WatermarkBlocker;
+import dev.ryan.tikratu.mods.ui.FontStyleBlocker;
 import dev.ryan.tikratu.utils.ModulePackage;
 import dev.ryan.tikratu.utils.Prefs;
 import dev.ryan.tikratu.utils.log.ModuleLog;
@@ -94,6 +95,9 @@ public class Module implements IXposedHookLoadPackage, IXposedHookZygoteInit {
         }
         if (prefs.getBoolean(Prefs.KEY_URL_SANITIZER_BLOCKER, Prefs.DEFAULT_URL_SANITIZER_BLOCKER)) {
             new UrlSanitizerBlocker().block(lpparam.classLoader);
+        }
+        if (prefs.getBoolean(Prefs.KEY_FONT_STYLE_BLOCKER, Prefs.DEFAULT_FONT_STYLE_BLOCKER)) {
+            new FontStyleBlocker().block(lpparam.classLoader);
         }
 
         if (prefs.getBoolean(Prefs.KEY_AD_BLOCKER, Prefs.DEFAULT_AD_BLOCKER)) {

@@ -109,6 +109,11 @@ public class FeaturesActivity extends Activity {
                 getString(R.string.feature_url_sanitizer_title), getString(R.string.feature_url_sanitizer_desc),
                 Prefs.KEY_URL_SANITIZER_BLOCKER, Prefs.DEFAULT_URL_SANITIZER_BLOCKER));
 
+        list.add(FeatureItem.header(getString(R.string.section_ui)));
+        list.add(FeatureItem.toggle(
+                getString(R.string.feature_font_style_title), getString(R.string.feature_font_style_desc),
+                Prefs.KEY_FONT_STYLE_BLOCKER, Prefs.DEFAULT_FONT_STYLE_BLOCKER));
+
         list.add(FeatureItem.header(getString(R.string.section_media)));
         list.add(FeatureItem.toggle(
                 getString(R.string.feature_watermark_title), getString(R.string.feature_watermark_desc),

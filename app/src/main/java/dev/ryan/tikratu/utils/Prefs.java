@@ -39,6 +39,9 @@ public final class Prefs {
     public static final String KEY_URL_SANITIZER_BLOCKER = "pref_url_sanitizer_blocker_enabled";
     public static final boolean DEFAULT_URL_SANITIZER_BLOCKER = true;
 
+    public static final String KEY_FONT_STYLE_BLOCKER = "pref_font_style_blocker_enabled";
+    public static final boolean DEFAULT_FONT_STYLE_BLOCKER = false;
+
     public static final String KEY_STREAK_ENABLED = "pref_streak_enabled";
     public static final boolean DEFAULT_STREAK_ENABLED = false;
 
