@@ -37,5 +37,29 @@
         <item name="colorSurfaceContainerHighest">@color/tr_surface_highest</item>
         <item name="colorOutline">@color/tr_outline</item>
         <item name="colorOutlineVariant">@color/tr_outline_variant</item>
+
+        <item name="materialSwitchStyle">@style/Widget.TikRatu.Switch</item>
+        <item name="bottomNavigationStyle">@style/Widget.TikRatu.BottomNav</item>
+    </style>
+
+    <!-- Track/thumb calcados del plugin de referencia (durazno ON, gris oscuro OFF),
+         no los colores por defecto de M3 (que usan colorPrimary/colorSurface). -->
+    <style name="Widget.TikRatu.Switch" parent="Widget.Material3.CompoundButton.MaterialSwitch">
+        <item name="trackTint">@color/switch_track</item>
+        <item name="thumbTint">@color/switch_thumb</item>
+        <item name="trackDecorationTint">@android:color/transparent</item>
+    </style>
+
+    <!-- Bottom nav con "pill" marrón en el ítem activo, calcado del plugin de referencia. -->
+    <style name="Widget.TikRatu.BottomNav" parent="Widget.Material3.BottomNavigationView">
+        <item name="backgroundTint">@color/tr_surface_container</item>
+        <item name="itemIconTint">@color/bottom_nav_item</item>
+        <item name="itemTextColor">@color/bottom_nav_item</item>
+        <item name="itemActiveIndicatorStyle">@style/Widget.TikRatu.BottomNav.ActiveIndicator</item>
+        <item name="elevation">0dp</item>
+    </style>
+
+    <style name="Widget.TikRatu.BottomNav.ActiveIndicator" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
+        <item name="android:color">@color/tr_secondary_container</item>
     </style>
 </resources>

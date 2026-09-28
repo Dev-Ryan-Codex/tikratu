@@ -1,36 +1,46 @@
 <resources>
-    <!-- Rampa de superficies neutra (misma idea de "elevación M3" que se ve en apps
-         de referencia del mismo género: InstaEclipse, WaEnhancer). -->
-    <color name="tr_background">#17171b</color>
-    <color name="tr_surface">#17171b</color>
-    <color name="tr_surface_low">#1c1c22</color>
-    <color name="tr_surface_container">#202027</color>
-    <color name="tr_surface_high">#26262e</color>
-    <color name="tr_surface_highest">#303038</color>
-    <color name="tr_surface_variant">#2c2c34</color>
-    <color name="tr_on_surface">#f2f2f5</color>
-    <color name="tr_on_surface_variant">#b8b8c0</color>
-    <color name="tr_outline">#45454f</color>
-    <color name="tr_outline_variant">#2c2c34</color>
+    <!-- Paleta calcada del diseño real de "TikTok Plugin" (capturas del profesor,
+         C:\Audit\equipos\tiktok apk\img tiktok plugin): negro puro plano, sin
+         rampa de superficies M3, con acento café/durazno en vez del cian/rosa
+         de TikTok que usábamos antes. -->
+    <color name="tr_background">#000000</color>
+    <color name="tr_surface">#000000</color>
+    <color name="tr_surface_low">#0d0d0d</color>
+    <color name="tr_surface_container">#1a1512</color>
+    <color name="tr_surface_high">#221b17</color>
+    <color name="tr_surface_highest">#2b221d</color>
+    <color name="tr_surface_variant">#1a1512</color>
+    <color name="tr_on_surface">#f2ece4</color>
+    <color name="tr_on_surface_variant">#a89a8c</color>
+    <color name="tr_outline">#3a3128</color>
+    <color name="tr_outline_variant">#221b17</color>
 
-    <!-- Primary: cian de TikTok -->
-    <color name="tr_primary">#25F4EE</color>
-    <color name="tr_on_primary">#00302f</color>
-    <color name="tr_primary_container">#003734</color>
-    <color name="tr_on_primary_container">#6ffff8</color>
+    <!-- Primary: durazno/salmón (switches ON, acentos, texto de botones destacados) -->
+    <color name="tr_primary">#f0b8a0</color>
+    <color name="tr_on_primary">#3a2318</color>
+    <color name="tr_primary_container">#4a3428</color>
+    <color name="tr_on_primary_container">#ffd9c2</color>
 
-    <!-- Secondary: rojo/rosa de TikTok -->
-    <color name="tr_secondary">#ff8ea3</color>
-    <color name="tr_on_secondary">#42071a</color>
-    <color name="tr_secondary_container">#5c1128</color>
-    <color name="tr_on_secondary_container">#ffd9e0</color>
+    <!-- Secondary: marrón medio (pill del bottom nav seleccionado, botones secundarios) -->
+    <color name="tr_secondary">#8a6a54</color>
+    <color name="tr_on_secondary">#2b1c12</color>
+    <color name="tr_secondary_container">#4a3428</color>
+    <color name="tr_on_secondary_container">#f0ddc8</color>
 
-    <!-- Tertiary: dorado (categoría streak) -->
-    <color name="tr_tertiary">#f4c025</color>
-    <color name="tr_on_tertiary">#3a2b00</color>
-    <color name="tr_tertiary_container">#4a3900</color>
-    <color name="tr_on_tertiary_container">#ffe08a</color>
+    <!-- Tertiary: dorado apagado (categoría streak) -->
+    <color name="tr_tertiary">#d4a94a</color>
+    <color name="tr_on_tertiary">#2b2000</color>
+    <color name="tr_tertiary_container">#3a2c00</color>
+    <color name="tr_on_tertiary_container">#f0d9a0</color>
 
-    <color name="tr_error">#ff6b60</color>
-    <color name="tr_on_error">#3a0906</color>
+    <color name="tr_error">#e8756a</color>
+    <color name="tr_on_error">#2b0906</color>
+
+    <!-- Switch: track/thumb exactos del plugin (no derivan de colorPrimary directo,
+         se referencian aparte porque MaterialSwitch necesita un ColorStateList,
+         ver res/color/switch_track.xml y switch_thumb.xml) -->
+    <color name="tr_switch_track_on">#f0b8a0</color>
+    <color name="tr_switch_thumb_on">#5c3a2e</color>
+    <color name="tr_switch_track_off">#2b2b2b</color>
+    <color name="tr_switch_thumb_off">#8a8a8a</color>
 </resources>

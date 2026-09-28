@@ -36,4 +36,16 @@
     <string name="feature_streak_title">Recordatorio de streak</string>
     <string name="feature_streak_desc">Notificación local, no manda nada por vos</string>
     <string name="feature_streak_time_title">Hora del recordatorio</string>
+
+    <string name="nav_home">Inicio</string>
+    <string name="nav_settings">Ajustes</string>
+    <string name="nav_info">Información</string>
+
+    <string name="settings_repo_title">Ver código fuente</string>
+    <string name="settings_repo_desc">Abre el repositorio de GitHub (Dev-Ryan-Codex/tikratu)</string>
+    <string name="settings_disclaimer_title">Disclaimer</string>
+    <string name="settings_disclaimer_desc">Uso educativo — Protección de Software. Ver DISCLAIMER.md en el repo.</string>
+
+    <string name="info_title">TikRatu</string>
+    <string name="info_body">Módulo Xposed/LSPosed para la app oficial de TikTok. Corre como hook en runtime sobre la instalación oficial — no parchea, no re-firma ni redistribuye el APK.\n\nInspirado en InstaEclipse (arquitectura del módulo + DexKit) y WaEnhancer (UI de la companion app), y en el catálogo real de features de un plugin de terceros analizado como trabajo de la materia Protección de Software.\n\nCada feature está verificada contra el código real de TikTok (decompilado con jadx) antes de implementarse — ver README.md del repo para el detalle técnico de cada hook.</string>
 </resources>

@@ -4,7 +4,6 @@ import android.content.SharedPreferences;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -58,7 +57,6 @@ public class FeatureAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
 
         RowHolder row = (RowHolder) holder;
-        row.icon.setImageResource(item.iconRes);
         row.title.setText(item.title);
 
         if (item.description != null) {
@@ -102,7 +100,6 @@ public class FeatureAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     }
 
     static class RowHolder extends RecyclerView.ViewHolder {
-        final ImageView icon;
         final TextView title;
         final TextView description;
         final MaterialSwitch switchView;
@@ -111,7 +108,6 @@ public class FeatureAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
 
         RowHolder(View itemView) {
             super(itemView);
-            icon = itemView.findViewById(R.id.iv_icon);
             title = itemView.findViewById(R.id.tv_title);
             description = itemView.findViewById(R.id.tv_description);
             switchView = itemView.findViewById(R.id.sw_toggle);
