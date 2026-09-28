@@ -19,7 +19,7 @@ Nace del análisis de un mod de terceros para TikTok (repack cerrado, re-firmado
 | Ocultar el App ID de AdMob (`AdsMetadataBlocker`) | Implementado — intercepta `Bundle.getString("com.google.android.gms.ads.APPLICATION_ID")`, verificado que esa key existe en el manifest de 46.4.3 y 47.0.3 |
 | Anular `LocationManager.getLastKnownLocation()` (`LocationBlocker`) | Implementado — no cubre `FusedLocationProviderClient` (API mas moderna de Play Services), ver comentario en el código |
 | Descargar video sin marca de agua (`WatermarkBlocker`) | Implementado — verificado contra 46.4.3 y 47.0.3, ver detalle abajo |
-| Descargar foto (slideshow) sin marca de agua (`PhotoWatermarkBlocker`) | Implementado parcialmente — cubre el camino protobuf, no el JSON/Gson (ver detalle abajo) |
+| Descargar foto (slideshow) sin marca de agua (`PhotoWatermarkBlocker`) | Implementado — cubre tanto el camino JSON como el protobuf, ver detalle abajo |
 | Marca de agua en GIFs | No implementado — el mecanismo es distinto (dibujado por el cliente, no una URL alternativa del servidor), ver nota abajo |
 | Recordatorio local de streak (no auto-envío) | Implementado, en la app companion (`streak/`) — notificación programada, no automatiza nada dentro de TikTok |
 | Resto de features del mod original (watermark, duet/stitch, CAPTCHA, region...) | No implementadas todavía — se agregan de a una, siguiendo el mismo patrón (`mods/<categoria>/<Feature>Hook.java`) |
@@ -74,7 +74,7 @@ public UrlModel downloadNoWatermarkAddr;  // getDownloadNoWatermarkAddr() -> sin
 
 ## Hook de watermark en fotos (slideshow) — y por qué no cubre GIFs
 
-Se decompiló `com.ss.android.ugc.aweme.feed.model.PhotoModeImageUrlModel` (`classes7.dex` en 47.0.3) — el modelo de los posts de foto/slideshow. Tiene tres campos análogos a los de `Video`, pero **sin getters**:
+Se decompiló `com.ss.android.ugc.aweme.feed.model.PhotoModeImageUrlModel` (`classes7.dex` en 47.0.3, `classes2.dex` en 46.4.3) — el modelo de los posts de foto/slideshow. Tiene tres campos análogos a los de `Video`, pero **sin getters**:
 
 ```java
 @02s3("display_image")          UrlModel displayImageNoWatermark;  // sin marca
@@ -82,9 +82,11 @@ Se decompiló `com.ss.android.ugc.aweme.feed.model.PhotoModeImageUrlModel` (`cla
 @02s3("user_watermark_image")   UrlModel userWatermarkImage;       // con marca del usuario que descarga
 ```
 
-Gson asigna estos campos por reflexión directa sobre el campo público (no hay `getDisplayImageNoWatermark()` que hookear). Como Xposed no puede interceptar una lectura de campo, `PhotoWatermarkBlocker` hookea en cambio el método que arma este objeto desde protobuf — `com.ss.android.ugc.tiktok.ConvertHelper.com$ss$ugc$tiktok$proto$ImagePostInfoV2$$com$ss$android$ugc$aweme$feed$model$PhotoModeImageUrlModel(...)` (nombre confirmado idéntico en 46.4.3 y 47.0.3) — y después de que arma el objeto, sobreescribe `ownerWatermarkImage`/`userWatermarkImage` con el valor de `displayImageNoWatermark`.
+Gson asigna estos campos por reflexión directa sobre el campo público (no hay `getDisplayImageNoWatermark()` que hookear), así que no alcanza con hookear un getter simple como en `Video`.
 
-**Limitación conocida y documentada en el código**: esto cubre el camino protobuf. Si el post se parsea por JSON/Gson normal (que también existe, mismas anotaciones `@02s3`), los campos se asignan por reflexión sin pasar por ningún método — no hay forma de hookear eso con Xposed. Cubrir ese camino necesitaría encontrar el método real de "guardar/compartir foto" que **lee** esos campos (en vez de donde se escriben), que no identifiqué todavía.
+**Se ubicó el punto real de guardado/compartir** (decompilando `classes24.dex`): una clase auto-generada por R8 en el paquete `X` (algo como `X.0oOF`, el nombre cambia en cada build — no sirve como target estable) arma la lista de fotos llamando a `PhotoModeImageInfo.getImageList()` y ahí, según un flag interno (`C0oOH.LIZ`, también inestable), decide leer `displayImageNoWatermark` o `userWatermarkImage`/`ownerWatermarkImage`.
+
+En vez de perseguir esas clases inestables, `PhotoWatermarkBlocker` hookea **`PhotoModeImageInfo.getImageList()`** — un getter público, sin ofuscar, confirmado idéntico en 46.4.3 y 47.0.3 (mismo motivo de estabilidad que `Aweme`/`Video`: campos serializados con Gson). Cada vez que se pide la lista de fotos del post —sea cual sea el código que la llamó, y sin importar si el objeto se pobló por JSON o por protobuf— se recorre la lista y se iguala `ownerWatermarkImage`/`userWatermarkImage` a `displayImageNoWatermark` en cada item. Esto cubre **ambos** caminos de parseo con un solo hook, a diferencia del primer intento (que solo tocaba el conversor protobuf).
 
 **GIFs**: no tiene un campo `..._no_watermark_addr` equivalente — encontramos evidencia (`drawWatermarkToCover`, `getImageWatermarkPath`) de que la marca de agua en GIFs se **dibuja del lado del cliente** (probablemente al renderizar los frames del GIF a partir de un clip de video), no es una URL alternativa que el servidor ya manda. Hookear eso sin verificar bien el punto exacto arriesga corromper visualmente la exportación — se dejó afuera en vez de adivinar.
 

@@ -1,66 +1,61 @@
 package dev.ryan.tikratu.mods.media;
 
+import java.util.List;
+
 import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import dev.ryan.tikratu.utils.log.ModuleLog;
 
 /**
- * Verificado contra TikTok oficial 46.4.3 y 47.0.3, decompilando con jadx
- * com.ss.android.ugc.aweme.feed.model.PhotoModeImageUrlModel (posts de foto /
- * slideshow). A diferencia de Video, esta clase NO tiene getters para sus
- * campos de watermark (Gson los inyecta directo por reflexión sobre campos
- * públicos), así que no hay un método simple tipo getDownloadAddr() para
- * hookear. Sus campos relevantes:
+ * Verificado contra TikTok oficial 46.4.3 y 47.0.3 (com.zhiliaoapp.musically).
+ *
+ * com.ss.android.ugc.aweme.feed.model.PhotoModeImageUrlModel (posts de foto/
+ * slideshow) tiene tres campos análogos a los de Video, pero SIN getters
+ * (Gson los inyecta por reflexión directa sobre el campo público):
  *
  *   @02s3("display_image")          UrlModel displayImageNoWatermark  (sin marca)
  *   @02s3("owner_watermark_image")  UrlModel ownerWatermarkImage      (con marca del autor)
- *   @02s3("user_watermark_image")   UrlModel userWatermarkImage       (con marca del usuario que descarga)
+ *   @02s3("user_watermark_image")   UrlModel userWatermarkImage       (con marca del que descarga)
  *
- * Como no se puede hookear una LECTURA de campo público con Xposed, se
- * hookea en cambio el método que arma el objeto a partir de protobuf:
- *   com.ss.android.ugc.tiktok.ConvertHelper
- *     .com$ss$ugc$tiktok$proto$ImagePostInfoV2$$com$ss$android$ugc$aweme$feed$model$PhotoModeImageUrlModel(...)
- * (nombre confirmado idéntico en 46.4.3 y 47.0.3 — lo genera un codegen de
- * proto-a-modelo de ByteDance, el primer parámetro es un tipo proto con
- * nombre ofuscado que cambia entre builds, por eso se usa hookAllMethods
- * por NOMBRE en vez de matchear tipos de parámetro exactos).
+ * Se ubicó el código real que guarda/comparte la foto (clase auto-generada
+ * en el paquete "X", tipo "0oOF" — nombre que cambia en cada build de R8, NO
+ * sirve como target de hook estable). Esa lógica arma la lista de imágenes
+ * llamando a PhotoModeImageInfo.getImageList() y ahí, según un flag interno,
+ * lee displayImageNoWatermark (sin marca) o userWatermarkImage/ownerWatermarkImage
+ * (con marca).
  *
- * Después de que el método arma el objeto, se sobreescriben
- * ownerWatermarkImage/userWatermarkImage con el valor de
- * displayImageNoWatermark (si existe), directamente sobre los campos del
- * objeto ya construido — no hace falta tocar la construcción en sí.
- *
- * LIMITACIÓN CONOCIDA: esto cubre el camino protobuf. Si el post de foto se
- * parsea por el camino JSON/Gson normal (que también existe, dado que los
- * campos tienen anotaciones @02s3/@SerializedName), Gson asigna los campos
- * por reflexión directa sin pasar por ningún método hookeable — Xposed no
- * puede interceptar una lectura de campo público. Cubrir ese camino
- * requeriría encontrar y hookear el método real de "guardar/compartir foto"
- * que LEE ownerWatermarkImage/userWatermarkImage, que no se identificó
- * todavía (pendiente).
+ * En vez de perseguir esa clase inestable, se hookea
+ * com.ss.android.ugc.aweme.feed.model.PhotoModeImageInfo.getImageList() —
+ * getter público, sin ofuscar (mismo motivo que Aweme/Video: Gson), confirmado
+ * idéntico en 46.4.3 y 47.0.3. Cada vez que se pide la lista de fotos del post
+ * (sea cual sea el código que la llamó — guardar, compartir, lo que sea, y sin
+ * importar si el objeto se pobló por JSON o por protobuf) se recorre e iguala
+ * ownerWatermarkImage/userWatermarkImage a displayImageNoWatermark en cada
+ * item. Esto reemplaza el hook anterior sobre el conversor protobuf
+ * (ConvertHelper), que solo cubría un camino de parseo — este cubre los dos.
  */
 public class PhotoWatermarkBlocker {
 
-    private static final String CONVERTER_CLASS = "com.ss.android.ugc.tiktok.ConvertHelper";
-    private static final String CONVERTER_METHOD =
-            "com$ss$ugc$tiktok$proto$ImagePostInfoV2$$com$ss$android$ugc$aweme$feed$model$PhotoModeImageUrlModel";
+    private static final String IMAGE_INFO_CLASS = "com.ss.android.ugc.aweme.feed.model.PhotoModeImageInfo";
 
     public void block(ClassLoader classLoader) {
         try {
-            Class<?> converterClass = XposedHelpers.findClass(CONVERTER_CLASS, classLoader);
-            XposedBridge.hookAllMethods(converterClass, CONVERTER_METHOD, new XC_MethodHook() {
-                @Override
-                protected void afterHookedMethod(MethodHookParam param) {
-                    Object result = param.getResult();
-                    if (result == null) return;
-                    Object clean = XposedHelpers.getObjectField(result, "displayImageNoWatermark");
-                    if (clean == null) return;
-                    XposedHelpers.setObjectField(result, "ownerWatermarkImage", clean);
-                    XposedHelpers.setObjectField(result, "userWatermarkImage", clean);
-                }
-            });
-            ModuleLog.line("(TikRatu | PhotoWatermarkBlocker): hooked " + CONVERTER_CLASS + "." + CONVERTER_METHOD);
+            XposedHelpers.findAndHookMethod(IMAGE_INFO_CLASS, classLoader, "getImageList",
+                    new XC_MethodHook() {
+                        @Override
+                        protected void afterHookedMethod(MethodHookParam param) {
+                            Object result = param.getResult();
+                            if (!(result instanceof List)) return;
+                            for (Object item : (List<?>) result) {
+                                if (item == null) continue;
+                                Object clean = XposedHelpers.getObjectField(item, "displayImageNoWatermark");
+                                if (clean == null) continue;
+                                XposedHelpers.setObjectField(item, "ownerWatermarkImage", clean);
+                                XposedHelpers.setObjectField(item, "userWatermarkImage", clean);
+                            }
+                        }
+                    });
+            ModuleLog.line("(TikRatu | PhotoWatermarkBlocker): hooked " + IMAGE_INFO_CLASS + ".getImageList()");
         } catch (Throwable t) {
             ModuleLog.line("(TikRatu | PhotoWatermarkBlocker): fallo el hook (" + t.getMessage() + ")");
         }
