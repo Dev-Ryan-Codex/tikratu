@@ -14,6 +14,7 @@ import com.google.android.material.materialswitch.MaterialSwitch;
 import java.util.List;
 
 import dev.ryan.tikratu.R;
+import dev.ryan.tikratu.utils.AppPrefs;
 
 public class FeatureAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
@@ -73,7 +74,11 @@ public class FeatureAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             row.switchView.setChecked(prefs.getBoolean(item.prefKey, item.defaultValue));
             row.itemView.setOnClickListener(v -> row.switchView.toggle());
             row.switchView.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                prefs.edit().putBoolean(item.prefKey, isChecked).apply();
+                // commit() (sincronico) en vez de apply(): necesitamos que el
+                // archivo ya este en disco antes de fixPermissions(), o el chmod
+                // corre sobre un archivo que todavia no existe.
+                prefs.edit().putBoolean(item.prefKey, isChecked).commit();
+                AppPrefs.fixPermissions(buttonView.getContext());
                 if (item.onToggle != null) item.onToggle.onToggle(isChecked);
             });
         } else {

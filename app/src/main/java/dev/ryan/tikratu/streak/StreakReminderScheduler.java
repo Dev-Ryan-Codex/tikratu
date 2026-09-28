@@ -36,7 +36,8 @@ public final class StreakReminderScheduler {
 
     /** Prende o apaga el recordatorio (llamado desde el switch de la UI). */
     public static void setEnabled(Context context, boolean enabled) {
-        prefs(context).edit().putBoolean(Prefs.KEY_STREAK_ENABLED, enabled).apply();
+        prefs(context).edit().putBoolean(Prefs.KEY_STREAK_ENABLED, enabled).commit();
+        AppPrefs.fixPermissions(context);
         if (enabled) {
             armNextAlarm(context, getHour(context), getMinute(context));
         } else {
