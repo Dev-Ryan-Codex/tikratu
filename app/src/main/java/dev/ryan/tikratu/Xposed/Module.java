@@ -12,7 +12,6 @@ import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 import dev.ryan.tikratu.mods.ads.AdBlocker;
 import dev.ryan.tikratu.mods.ads.AdSignalsBlocker;
-import dev.ryan.tikratu.mods.feed.FeedFilterProbe;
 import dev.ryan.tikratu.mods.tracking.AdsIdBlocker;
 import dev.ryan.tikratu.mods.tracking.AdsMetadataBlocker;
 import dev.ryan.tikratu.mods.tracking.LocationBlocker;
@@ -102,8 +101,6 @@ public class Module implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                 loadDexKitNativeLibrary();
                 try (DexKitBridge bridge = DexKitBridge.create(lpparam.appInfo.sourceDir)) {
                     new AdBlocker().disableFeedAdFlag(bridge, lpparam.classLoader);
-                    // Sonda de diagnostico (no una feature) - ver FeedFilterProbe.java.
-                    new FeedFilterProbe().probe(bridge);
                     // Proximos hooks (watermark, duet/stitch, etc.) se agregan aca,
                     // uno por clase en dev.ryan.tikratu.mods.<categoria>, igual que AdBlocker.
                 }
