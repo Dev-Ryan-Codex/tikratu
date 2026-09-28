@@ -40,14 +40,22 @@ public final class AppPrefs {
             File sharedPrefsDir = new File(dataDir, "shared_prefs");
             File prefsFile = new File(sharedPrefsDir, context.getPackageName() + "_preferences.xml");
 
-            // Bit de ejecucion/traversal en los directorios del camino (necesario
-            // para poder LLEGAR al archivo), lectura en el archivo en si.
-            dataDir.setExecutable(true, false);
-            sharedPrefsDir.setExecutable(true, false);
-            sharedPrefsDir.setReadable(true, false);
-            prefsFile.setReadable(true, false);
-        } catch (Throwable ignored) {
-            // Best-effort — si falla, el modulo simplemente sigue viendo los defaults.
+            boolean dataDirOk = dataDir.setExecutable(true, false);
+            boolean sharedDirExecOk = sharedPrefsDir.setExecutable(true, false);
+            boolean sharedDirReadOk = sharedPrefsDir.setReadable(true, false);
+            boolean fileReadOk = prefsFile.setReadable(true, false);
+
+            android.util.Log.i("TikRatu-diag", "fixPermissions: dataDir=" + dataDir.getAbsolutePath()
+                    + " exists=" + dataDir.exists()
+                    + " | sharedPrefsDir exists=" + sharedPrefsDir.exists()
+                    + " | prefsFile=" + prefsFile.getAbsolutePath() + " exists=" + prefsFile.exists()
+                    + " canRead=" + prefsFile.canRead()
+                    + " | setExecutable(dataDir)=" + dataDirOk
+                    + " setExecutable(sharedDir)=" + sharedDirExecOk
+                    + " setReadable(sharedDir)=" + sharedDirReadOk
+                    + " setReadable(file)=" + fileReadOk);
+        } catch (Throwable t) {
+            android.util.Log.i("TikRatu-diag", "fixPermissions fallo: " + t);
         }
     }
 }

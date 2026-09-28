@@ -72,6 +72,16 @@ public class Module implements IXposedHookLoadPackage, IXposedHookZygoteInit {
         prefs.makeWorldReadable();
         prefs.reload();
 
+        try {
+            java.io.File f = prefs.getFile();
+            ModuleLog.line("(TikRatu | diag): prefs file=" + f.getAbsolutePath()
+                    + " exists=" + f.exists() + " canRead=" + f.canRead()
+                    + " length=" + f.length() + " lastModified=" + f.lastModified()
+                    + " | fontStyle(raw)=" + prefs.getBoolean(Prefs.KEY_FONT_STYLE_BLOCKER, Prefs.DEFAULT_FONT_STYLE_BLOCKER));
+        } catch (Throwable t) {
+            ModuleLog.line("(TikRatu | diag): fallo leyendo diagnostico (" + t + ")");
+        }
+
         if (prefs.getBoolean(Prefs.KEY_ADS_ID_BLOCKER, Prefs.DEFAULT_ADS_ID_BLOCKER)) {
             new AdsIdBlocker().block(lpparam.classLoader);
         }
