@@ -51,13 +51,29 @@ import dev.ryan.tikratu.utils.log.ModuleLog;
  * alternativa del propio servidor que dé un archivo sin marca — swap de
  * campo no alcanza.
  *
- * FIX REAL (2026-09-27): se agrega TikwmResolver como camino PRIMARIO —
- * resuelve el video vía la API pública de terceros tikwm.com usando
- * Aweme.getShareUrl() (ver TikwmResolver.java para el detalle completo y
- * el tradeoff de depender de un servicio externo). Si tikwm falla o no
- * está disponible, se hace fallback al swap de campo de siempre (que no
- * arregla el problema, pero tampoco rompe nada — mismo comportamiento que
- * antes de este fix).
+ * FIX INTENTADO #1 (2026-09-27): TikwmResolver — resuelve el video vía la
+ * API pública de terceros tikwm.com usando Aweme.getShareUrl() (ver
+ * TikwmResolver.java). Confirmado en dispositivo real (2 videos, 2 cuentas
+ * distintas, una de ellas un creador personal sin repost) que TAMPOCO
+ * produce un archivo sin marca hoy — se deja activo como intento
+ * best-effort con fallback seguro, pero sin expectativa real.
+ *
+ * FIX INTENTADO #2 (2026-09-27): re-decompilando Video.java se encontraron
+ * TRES campos de descarga más, nunca antes probados, con getters públicos
+ * sin ofuscar (misma razón Gson que los demás):
+ *   - new_download_addr        -> getNewDownloadAddr()
+ *   - ui_alike_download_addr   -> getUIAlikeDownloadAddr()
+ *   - caption_download_addr    -> getCaptionDownloadAddr()
+ * (Se descubrieron comparando el modelo protobuf equivalente de Video,
+ * clase X.C05OL en classes3.dex de TikTok 47.0.3, que además del par ya
+ * conocido tiene download_suffix_logo_addr/has_download_suffix_logo_addr
+ * y misc_download_addrs — estos dos últimos NO tienen equivalente Gson en
+ * Video.java, no son alcanzables desde este hook.)
+ * Se prueban en cascada, en este orden: newDownloadAddr (el nombre sugiere
+ * que reemplazó al viejo mecanismo) -> uiAlikeAddr -> captionDownloadAddr
+ * -> tikwm.com -> downloadNoWatermarkAddr (último fallback, sabido roto).
+ * El hook loguea uri+urlList de cada candidato antes de elegir, para poder
+ * diagnosticar en logcat cuál (si alguno) sirve contenido limpio.
  */
 public class WatermarkBlocker {
 
@@ -113,8 +129,36 @@ public class WatermarkBlocker {
                         @Override
                         protected void afterHookedMethod(MethodHookParam param) {
                             Object original = param.getResult();
+                            Object video = param.thisObject;
 
-                            String shareUrl = shareUrlByVideo.get(param.thisObject);
+                            Object newDownloadAddr = safeCall(video, "getNewDownloadAddr");
+                            Object uiAlikeAddr = safeCall(video, "getUIAlikeDownloadAddr");
+                            Object captionDownloadAddr = safeCall(video, "getCaptionDownloadAddr");
+                            Object noWatermarkAddr = safeCall(video, "getDownloadNoWatermarkAddr");
+
+                            ModuleLog.line("(TikRatu | WatermarkBlocker): candidatos - original=" + describe(original)
+                                    + " | new=" + describe(newDownloadAddr)
+                                    + " | uiAlike=" + describe(uiAlikeAddr)
+                                    + " | caption=" + describe(captionDownloadAddr)
+                                    + " | noWatermark=" + describe(noWatermarkAddr));
+
+                            if (newDownloadAddr != null) {
+                                ModuleLog.line("(TikRatu | WatermarkBlocker): probando newDownloadAddr");
+                                param.setResult(newDownloadAddr);
+                                return;
+                            }
+                            if (uiAlikeAddr != null) {
+                                ModuleLog.line("(TikRatu | WatermarkBlocker): probando uiAlikeAddr (newDownloadAddr era null)");
+                                param.setResult(uiAlikeAddr);
+                                return;
+                            }
+                            if (captionDownloadAddr != null) {
+                                ModuleLog.line("(TikRatu | WatermarkBlocker): probando captionDownloadAddr (new/uiAlike eran null)");
+                                param.setResult(captionDownloadAddr);
+                                return;
+                            }
+
+                            String shareUrl = shareUrlByVideo.get(video);
                             if (shareUrl != null && original != null) {
                                 String cleanUrl = resolveWithTimeout(shareUrl);
                                 if (cleanUrl != null) {
@@ -131,15 +175,6 @@ public class WatermarkBlocker {
                                 }
                             }
 
-                            Object noWatermarkAddr;
-                            try {
-                                noWatermarkAddr = XposedHelpers.callMethod(param.thisObject, "getDownloadNoWatermarkAddr");
-                            } catch (Throwable t) {
-                                ModuleLog.line("(TikRatu | WatermarkBlocker): getDownloadNoWatermarkAddr() fallo: " + t);
-                                return;
-                            }
-                            ModuleLog.line("(TikRatu | WatermarkBlocker): getDownloadAddr() llamado. original="
-                                    + describe(original) + " | noWatermark=" + describe(noWatermarkAddr));
                             if (noWatermarkAddr != null) {
                                 param.setResult(noWatermarkAddr);
                             }
@@ -148,6 +183,14 @@ public class WatermarkBlocker {
             ModuleLog.line("(TikRatu | WatermarkBlocker): hooked " + VIDEO_CLASS + ".getDownloadAddr()");
         } catch (Throwable t) {
             ModuleLog.line("(TikRatu | WatermarkBlocker): fallo el hook (" + t.getMessage() + ")");
+        }
+    }
+
+    private static Object safeCall(Object obj, String method) {
+        try {
+            return XposedHelpers.callMethod(obj, method);
+        } catch (Throwable t) {
+            return null;
         }
     }
 
