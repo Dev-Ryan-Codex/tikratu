@@ -45,8 +45,18 @@ public final class AppPrefs {
             boolean sharedDirReadOk = sharedPrefsDir.setReadable(true, false);
             boolean fileReadOk = prefsFile.setReadable(true, false);
 
+            StringBuilder listing = new StringBuilder();
+            File[] top = dataDir.listFiles();
+            if (top != null) {
+                for (File f : top) {
+                    listing.append(f.getName()).append(f.isDirectory() ? "/ " : " ");
+                }
+            }
             android.util.Log.i("TikRatu-diag", "fixPermissions: dataDir=" + dataDir.getAbsolutePath()
                     + " exists=" + dataDir.exists()
+                    + " | contenido=[" + listing + "]"
+                    + " | getFilesDir=" + context.getFilesDir().getAbsolutePath()
+                    + " | getDataDir=" + (android.os.Build.VERSION.SDK_INT >= 24 ? context.getDataDir().getAbsolutePath() : "N/A")
                     + " | sharedPrefsDir exists=" + sharedPrefsDir.exists()
                     + " | prefsFile=" + prefsFile.getAbsolutePath() + " exists=" + prefsFile.exists()
                     + " canRead=" + prefsFile.canRead()
