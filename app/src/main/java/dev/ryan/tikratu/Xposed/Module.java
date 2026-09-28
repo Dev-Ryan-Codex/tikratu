@@ -17,6 +17,7 @@ import dev.ryan.tikratu.mods.tracking.AdsMetadataBlocker;
 import dev.ryan.tikratu.mods.tracking.LocationBlocker;
 import dev.ryan.tikratu.mods.media.DownloadUnlockBlocker;
 import dev.ryan.tikratu.mods.media.PhotoWatermarkBlocker;
+import dev.ryan.tikratu.mods.media.UrlSanitizerBlocker;
 import dev.ryan.tikratu.mods.media.WatermarkBlocker;
 import dev.ryan.tikratu.utils.ModulePackage;
 import dev.ryan.tikratu.utils.Prefs;
@@ -90,6 +91,9 @@ public class Module implements IXposedHookLoadPackage, IXposedHookZygoteInit {
         }
         if (prefs.getBoolean(Prefs.KEY_AD_SIGNALS_BLOCKER, Prefs.DEFAULT_AD_SIGNALS_BLOCKER)) {
             new AdSignalsBlocker().block(lpparam.classLoader);
+        }
+        if (prefs.getBoolean(Prefs.KEY_URL_SANITIZER_BLOCKER, Prefs.DEFAULT_URL_SANITIZER_BLOCKER)) {
+            new UrlSanitizerBlocker().block(lpparam.classLoader);
         }
 
         if (prefs.getBoolean(Prefs.KEY_AD_BLOCKER, Prefs.DEFAULT_AD_BLOCKER)) {

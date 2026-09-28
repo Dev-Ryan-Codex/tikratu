@@ -36,6 +36,9 @@ public final class Prefs {
     public static final String KEY_AD_SIGNALS_BLOCKER = "pref_ad_signals_blocker_enabled";
     public static final boolean DEFAULT_AD_SIGNALS_BLOCKER = true;
 
+    public static final String KEY_URL_SANITIZER_BLOCKER = "pref_url_sanitizer_blocker_enabled";
+    public static final boolean DEFAULT_URL_SANITIZER_BLOCKER = true;
+
     public static final String KEY_STREAK_ENABLED = "pref_streak_enabled";
     public static final boolean DEFAULT_STREAK_ENABLED = false;
 

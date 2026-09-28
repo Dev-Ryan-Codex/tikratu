@@ -63,6 +63,9 @@ public class FeaturesActivity extends Activity {
         list.add(FeatureItem.toggle(R.drawable.ic_block,
                 getString(R.string.feature_ad_signals_title), getString(R.string.feature_ad_signals_desc),
                 Prefs.KEY_AD_SIGNALS_BLOCKER, Prefs.DEFAULT_AD_SIGNALS_BLOCKER));
+        list.add(FeatureItem.toggle(R.drawable.ic_block,
+                getString(R.string.feature_url_sanitizer_title), getString(R.string.feature_url_sanitizer_desc),
+                Prefs.KEY_URL_SANITIZER_BLOCKER, Prefs.DEFAULT_URL_SANITIZER_BLOCKER));
 
         list.add(FeatureItem.header(getString(R.string.section_media)));
         list.add(FeatureItem.toggle(R.drawable.ic_download,

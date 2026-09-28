@@ -21,10 +21,12 @@
     <string name="feature_location_desc">LocationManager siempre devuelve null en el proceso de TikTok</string>
     <string name="feature_ad_signals_title">Quitar anuncios encubiertos</string>
     <string name="feature_ad_signals_desc">Aweme.isSoftAd(), isPseudoAd() e isSearchPreciseAd() siempre devuelven false</string>
+    <string name="feature_url_sanitizer_title">Limpiar links copiados</string>
+    <string name="feature_url_sanitizer_desc">Quita parámetros de tracking (utm_*, ttclid, etc.) al copiar un enlace de TikTok</string>
 
     <string name="section_media">Media</string>
     <string name="feature_watermark_title">Video sin marca de agua</string>
-    <string name="feature_watermark_desc">Probado en dispositivo real: el hook reemplaza la URL pero TikTok sigue sirviendo el video con marca — no funciona hoy, ver README</string>
+    <string name="feature_watermark_desc">Resuelve el video vía tikwm.com (servicio de terceros) al tocar Descargar; si falla, cae al swap de campo del propio TikTok (no confiable, ver README)</string>
     <string name="feature_photo_watermark_title">Fotos sin marca de agua</string>
     <string name="feature_photo_watermark_desc">Mismo mecanismo que el de video — no probado todavía en un post de foto real</string>
     <string name="feature_download_unlock_title">Forzar descarga habilitada</string>

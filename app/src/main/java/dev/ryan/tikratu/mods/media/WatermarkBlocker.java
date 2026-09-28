@@ -1,5 +1,9 @@
 package dev.ryan.tikratu.mods.media;
 
+import java.util.Collections;
+import java.util.Map;
+import java.util.WeakHashMap;
+
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedHelpers;
 import dev.ryan.tikratu.utils.log.ModuleLog;
@@ -39,21 +43,76 @@ import dev.ryan.tikratu.utils.log.ModuleLog;
  * que lo haya sido en versiones viejas de TikTok, y que el campo se haya
  * dejado de usar para ese fin sin quitarlo del modelo). No hay URL
  * alternativa del propio servidor que dé un archivo sin marca — swap de
- * campo no alcanza. Se deja el hook activo (no hace daño, y podría servir
- * en cuentas/regiones donde el campo sí sea válido) pero no remover el
- * toggle sería falsa expectativa: está documentado como no confiable.
+ * campo no alcanza.
+ *
+ * FIX REAL (2026-09-27): se agrega TikwmResolver como camino PRIMARIO —
+ * resuelve el video vía la API pública de terceros tikwm.com usando
+ * Aweme.getShareUrl() (ver TikwmResolver.java para el detalle completo y
+ * el tradeoff de depender de un servicio externo). Si tikwm falla o no
+ * está disponible, se hace fallback al swap de campo de siempre (que no
+ * arregla el problema, pero tampoco rompe nada — mismo comportamiento que
+ * antes de este fix).
  */
 public class WatermarkBlocker {
 
     private static final String VIDEO_CLASS = "com.ss.android.ugc.aweme.feed.model.Video";
+    private static final String AWEME_CLASS = "com.ss.android.ugc.aweme.feed.model.Aweme";
+
+    // Video -> shareUrl del Aweme dueño de ese Video. Se llena en
+    // Aweme.getVideo() (que se llama en muchos lugares del feed, no solo al
+    // descargar) y se consulta reactivamente en getDownloadAddr() (que sí
+    // confirmamos en dispositivo real que solo se llama al tocar Descargar).
+    private static final Map<Object, String> shareUrlByVideo = Collections.synchronizedMap(new WeakHashMap<>());
 
     public void block(ClassLoader classLoader) {
+        try {
+            XposedHelpers.findAndHookMethod(AWEME_CLASS, classLoader, "getVideo",
+                    new XC_MethodHook() {
+                        @Override
+                        protected void afterHookedMethod(MethodHookParam param) {
+                            Object video = param.getResult();
+                            if (video == null) return;
+                            try {
+                                Object shareUrl = XposedHelpers.callMethod(param.thisObject, "getShareUrl");
+                                if (shareUrl instanceof String && !((String) shareUrl).isEmpty()) {
+                                    shareUrlByVideo.put(video, (String) shareUrl);
+                                }
+                            } catch (Throwable ignored) {
+                                // Aweme sin shareUrl (raro) - no rompe nada, solo no habilita tikwm para este item.
+                            }
+                        }
+                    });
+        } catch (Throwable t) {
+            ModuleLog.line("(TikRatu | WatermarkBlocker): no se pudo hookear " + AWEME_CLASS + ".getVideo() (" + t.getMessage() + ")");
+        }
+
         try {
             XposedHelpers.findAndHookMethod(VIDEO_CLASS, classLoader, "getDownloadAddr",
                     new XC_MethodHook() {
                         @Override
                         protected void afterHookedMethod(MethodHookParam param) {
                             Object original = param.getResult();
+
+                            String shareUrl = shareUrlByVideo.get(param.thisObject);
+                            if (shareUrl != null && original != null) {
+                                ModuleLog.line("(TikRatu | WatermarkBlocker): resolviendo via tikwm.com en hilo "
+                                        + Thread.currentThread().getName() + " (main=" + (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) + ")");
+                                TikwmResolver.Result resolved = TikwmResolver.resolve(shareUrl);
+                                String cleanUrl = resolved != null ? resolved.bestVideoUrl() : null;
+                                if (cleanUrl != null) {
+                                    try {
+                                        XposedHelpers.callMethod(original, "setUrlList", Collections.singletonList(cleanUrl));
+                                        ModuleLog.line("(TikRatu | WatermarkBlocker): URL resuelta via tikwm.com para "
+                                                + shareUrl + " -> " + cleanUrl);
+                                        return;
+                                    } catch (Throwable t) {
+                                        ModuleLog.line("(TikRatu | WatermarkBlocker): fallo aplicando URL de tikwm (" + t.getMessage() + ")");
+                                    }
+                                } else {
+                                    ModuleLog.line("(TikRatu | WatermarkBlocker): tikwm.com no resolvio " + shareUrl + ", fallback a download_no_watermark_addr");
+                                }
+                            }
+
                             Object noWatermarkAddr;
                             try {
                                 noWatermarkAddr = XposedHelpers.callMethod(param.thisObject, "getDownloadNoWatermarkAddr");
