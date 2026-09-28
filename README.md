@@ -12,17 +12,38 @@ Nace del análisis de un mod de terceros para TikTok (repack cerrado, re-firmado
 
 ## Estado actual
 
-| Feature | Estado |
+Columna "Estado real" = confirmado con logs de un dispositivo real (Android 16 / LineageOS + KernelSU Next + LSPosed), no solo análisis estático. Ver §"Pruebas en dispositivo real" para el detalle de cada uno.
+
+| Feature | Estado real (dispositivo) |
 |---|---|
-| Quitar el flag "es anuncio" del feed (`AdBlocker`) | Implementado, hook verificado contra el código real de TikTok **46.4.3 y 47.0.3** (ver abajo) |
-| Bloquear Advertising ID / GAID (`AdsIdBlocker`) | Implementado — apunta a `AdvertisingIdClient.Info` de Play Services, no a código interno de TikTok |
-| Ocultar el App ID de AdMob (`AdsMetadataBlocker`) | Implementado — intercepta `Bundle.getString("com.google.android.gms.ads.APPLICATION_ID")`, verificado que esa key existe en el manifest de 46.4.3 y 47.0.3 |
-| Anular `LocationManager.getLastKnownLocation()` (`LocationBlocker`) | Implementado — no cubre `FusedLocationProviderClient` (API mas moderna de Play Services), ver comentario en el código |
-| Descargar video sin marca de agua (`WatermarkBlocker`) | Implementado — verificado contra 46.4.3 y 47.0.3, ver detalle abajo |
-| Descargar foto (slideshow) sin marca de agua (`PhotoWatermarkBlocker`) | Implementado — cubre tanto el camino JSON como el protobuf, ver detalle abajo |
-| Marca de agua en GIFs | No implementado — el mecanismo es distinto (dibujado por el cliente, no una URL alternativa del servidor), ver nota abajo |
-| Recordatorio local de streak (no auto-envío) | Implementado, en la app companion (`streak/`) — notificación programada, no automatiza nada dentro de TikTok |
-| Resto de features del mod original (watermark, duet/stitch, CAPTCHA, region...) | No implementadas todavía — se agregan de a una, siguiendo el mismo patrón (`mods/<categoria>/<Feature>Hook.java`) |
+| Quitar el flag "es anuncio" del feed (`AdBlocker`) | 🔴 **Roto** — DexKit nunca inicializa (`UnsatisfiedLinkError` en su librería nativa), el hook ni se instala |
+| Bloquear Advertising ID / GAID (`AdsIdBlocker`) | 🟡 No-op en este dispositivo (LineageOS sin Play Services con esa librería) — sin verificar en un device con Play Services real |
+| Ocultar el App ID de AdMob (`AdsMetadataBlocker`) | 🔴 **Roto** — el hook falla al instalarse (`Bundle#getString` no hookeable en este build/Android 16) |
+| Anular `LocationManager.getLastKnownLocation()` (`LocationBlocker`) | 🟢 Se instala correctamente (no se verificó el efecto en runtime, solo la instalación del hook) |
+| Descargar video sin marca de agua (`WatermarkBlocker`) | 🔴 **No logra el efecto** — el hook dispara y reemplaza la URL correctamente, pero el archivo descargado sigue con la marca de agua (ver detalle abajo, es un problema del lado del servidor de TikTok, no del hook) |
+| Descargar foto (slideshow) sin marca de agua (`PhotoWatermarkBlocker`) | ⚪ Se instala correctamente — no probado todavía con un post de foto real |
+| Marca de agua en GIFs | No implementado — el mecanismo es distinto (dibujado por el cliente, no una URL alternativa del servidor) |
+| Recordatorio local de streak (no auto-envío) | ⚪ No probado en este dispositivo todavía |
+| Resto de features del mod original (duet/stitch, CAPTCHA, region...) | No implementadas todavía — se agregan de a una, siguiendo el mismo patrón (`mods/<categoria>/<Feature>Hook.java`) |
+
+## Pruebas en dispositivo real (2026-09-27)
+
+Primera vez que el módulo se probó en un teléfono real (Android 16, LineageOS, KernelSU Next + LSPosed, sin Google Play Services), conectado por ADB para poder leer logcat en vivo, tomar screenshots, y automatizar taps con `uiautomator`/`input tap` durante la sesión.
+
+**El síntoma reportado ("falla al descargar videos/historias") NO era un crash.** Se armó la hipótesis inicial de que el reinicio de TikTok a su `SplashActivity` justo después de tocar "Descargar" era un crash causado por `WatermarkBlocker`/`PhotoWatermarkBlocker`. Se descartó con evidencia:
+
+- Logcat completo capturado durante el evento: **cero** `FATAL EXCEPTION`, cero eventos de "Process ... died".
+- El archivo de video **se guardó igual** en `/sdcard/DCIM/Camera/` (se confirmó bajándolo por `adb pull` y extrayendo un frame con `ffmpeg`).
+- Conclusión: el "reinicio a Splash" es la propia `Activity` de TikTok reconstruyéndose al volver del selector de compartir (comportamiento normal de Android bajo presión de memoria/recreación de Activity), no una falla de este módulo.
+
+**El problema real, confirmado con logging agregado a `WatermarkBlocker`**: el hook se instala, se dispara, y reemplaza `getDownloadAddr()` por `getDownloadNoWatermarkAddr()` correctamente (se ve en el log que esta última no es `null` y apunta a una URL distinta — el endpoint normal de reproducción interna `api16-normal-c-*.tiktokv.com/aweme/v1/play/`, sin `watermark=1&logo_name=tiktok` en la query, a diferencia del original). **Pese a eso, el archivo final descargado sigue con la marca de agua incrustada en los píxeles.** Esto no se puede arreglar cambiando el hook: es TikTok (del lado del servidor) sirviendo contenido marcado por ambas URLs, al menos para esta cuenta/región/versión. El campo `download_no_watermark_addr` puede haber dejado de significar lo que su nombre sugiere.
+
+De paso, esta sesión de pruebas destapó **dos hooks que directamente no funcionan** en este dispositivo, no relacionados con el reporte original:
+
+- **`AdBlocker` nunca se activa**: `DexKitBridge.create()` tira `UnsatisfiedLinkError` (`No implementation found for ... nativeInitDexKit`) — la librería nativa de DexKit no está cargando en el APK de debug compilado por CI. Pendiente de investigar el empaquetado (probablemente falta configurar `ndk.abiFilters`/`jniLibs` en `app/build.gradle`, o el AAR de dexkit no se está mergeando bien).
+- **`AdsMetadataBlocker` falla al instalarse**: `XposedHelpers.findAndHookMethod` sobre `Bundle#getString(String)` tira error en este Android 16 — puede que ART haya empezado a tratar ese método de forma especial (demasiado caliente/inlineable) y LSPosed no pueda hookearlo ahí.
+
+**Herramientas instaladas en esta máquina durante la sesión** (quedan disponibles para la próxima): `adb` (Android Platform Tools, vía winget) y `ffmpeg` (para extraer frames de video y verificar visualmente el resultado de los downloads).
 
 ### Por qué NO se replicaron otros hallazgos del mod analizado
 

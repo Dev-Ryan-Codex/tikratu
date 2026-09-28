@@ -24,12 +24,24 @@ import dev.ryan.tikratu.utils.log.ModuleLog;
  * (el mod original tenía toggles separados para eso) — pendiente si se
  * confirma un campo equivalente en el modelo de imagen.
  *
- * DIAGNÓSTICO (probando en dispositivo real, 2026-09-27): la descarga
- * funciona pero el archivo guardado sigue con marca de agua en al menos un
- * video probado. Se agrega logging detallado por cada llamada para ver si
- * download_no_watermark_addr viene null para esos videos (server no lo
- * ofrece) o si el hook simplemente no se está disparando en el flujo real
- * de guardado.
+ * DIAGNÓSTICO CONFIRMADO EN DISPOSITIVO REAL (2026-09-27, TikTok 47.0.3):
+ * el hook SÍ se dispara y SÍ reemplaza el resultado (se confirmó con logs
+ * que download_no_watermark_addr no es null y apunta a una URL distinta,
+ * del endpoint normal de reproducción interna
+ * api16-normal-c-*.tiktokv.com/aweme/v1/play/ en vez del endpoint de
+ * descarga con &watermark=1&logo_name=tiktok en la query). Pese a eso, el
+ * archivo de video guardado en el dispositivo SIGUE teniendo la marca de
+ * agua incrustada en los píxeles.
+ *
+ * Conclusión: no es un bug de este hook — es que, al menos para esta
+ * cuenta/región/versión, el contenido que sirve ByteDance en
+ * download_no_watermark_addr YA NO es realmente una copia limpia (puede
+ * que lo haya sido en versiones viejas de TikTok, y que el campo se haya
+ * dejado de usar para ese fin sin quitarlo del modelo). No hay URL
+ * alternativa del propio servidor que dé un archivo sin marca — swap de
+ * campo no alcanza. Se deja el hook activo (no hace daño, y podría servir
+ * en cuentas/regiones donde el campo sí sea válido) pero no remover el
+ * toggle sería falsa expectativa: está documentado como no confiable.
  */
 public class WatermarkBlocker {
 

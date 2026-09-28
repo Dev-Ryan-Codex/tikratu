@@ -22,9 +22,9 @@
 
     <string name="section_media">Media</string>
     <string name="feature_watermark_title">Video sin marca de agua</string>
-    <string name="feature_watermark_desc">Usa la URL download_no_watermark_addr que ya manda TikTok</string>
+    <string name="feature_watermark_desc">Probado en dispositivo real: el hook reemplaza la URL pero TikTok sigue sirviendo el video con marca — no funciona hoy, ver README</string>
     <string name="feature_photo_watermark_title">Fotos sin marca de agua</string>
-    <string name="feature_photo_watermark_desc">Cubre el post de foto/slideshow completo</string>
+    <string name="feature_photo_watermark_desc">Mismo mecanismo que el de video — no probado todavía en un post de foto real</string>
 
     <string name="section_streak">Streak</string>
     <string name="feature_streak_title">Recordatorio de streak</string>
