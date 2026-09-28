@@ -128,6 +128,9 @@ public class FeaturesActivity extends Activity {
         list.add(numberAction(R.string.feature_min_views_title, Prefs.KEY_MIN_VIEWS, Prefs.DEFAULT_MIN_VIEWS));
         list.add(numberAction(R.string.feature_min_likes_title, Prefs.KEY_MIN_LIKES, Prefs.DEFAULT_MIN_LIKES));
         list.add(textAction(R.string.feature_blocklist_title, Prefs.KEY_CAPTION_BLOCKLIST, Prefs.DEFAULT_CAPTION_BLOCKLIST));
+        list.add(FeatureItem.toggle(
+                getString(R.string.feature_stop_loop_title), getString(R.string.feature_stop_loop_desc),
+                Prefs.KEY_STOP_VIDEO_LOOPING, Prefs.DEFAULT_STOP_VIDEO_LOOPING));
 
         list.add(FeatureItem.header(getString(R.string.section_ui)));
         list.add(FeatureItem.toggle(

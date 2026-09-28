@@ -43,6 +43,9 @@
     <string name="dialog_ok">Guardar</string>
     <string name="dialog_cancel">Cancelar</string>
 
+    <string name="feature_stop_loop_title">Dejar de reproducir en bucle</string>
+    <string name="feature_stop_loop_desc">El video se detiene al terminar en vez de repetirse (TTVideoEngine.setLooping)</string>
+
     <string name="section_ui">Interfaz</string>
     <string name="feature_font_style_title">Fuente del sistema</string>
     <string name="feature_font_style_desc">Reemplaza TikTok Sans (font/TikTokSans-VF.otf) por la fuente sans-serif del sistema</string>

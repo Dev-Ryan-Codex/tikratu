@@ -71,6 +71,9 @@ public final class Prefs {
     public static final String KEY_CAPTION_BLOCKLIST = "pref_feed_caption_blocklist";
     public static final String DEFAULT_CAPTION_BLOCKLIST = "";
 
+    public static final String KEY_STOP_VIDEO_LOOPING = "pref_stop_video_looping";
+    public static final boolean DEFAULT_STOP_VIDEO_LOOPING = false;
+
     public static final String KEY_STREAK_ENABLED = "pref_streak_enabled";
     public static final boolean DEFAULT_STREAK_ENABLED = false;
 

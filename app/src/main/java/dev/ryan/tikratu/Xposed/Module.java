@@ -12,6 +12,7 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 import dev.ryan.tikratu.mods.ads.AdBlocker;
 import dev.ryan.tikratu.mods.ads.AdSignalsBlocker;
 import dev.ryan.tikratu.mods.feed.FeedFilterBlocker;
+import dev.ryan.tikratu.mods.interaction.StopVideoLoopingBlocker;
 import dev.ryan.tikratu.mods.tracking.AdsIdBlocker;
 import dev.ryan.tikratu.mods.tracking.AdsMetadataBlocker;
 import dev.ryan.tikratu.mods.tracking.LocationBlocker;
@@ -126,6 +127,9 @@ public class Module implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                 prefs.getString(Prefs.KEY_CAPTION_BLOCKLIST, Prefs.DEFAULT_CAPTION_BLOCKLIST));
         if (feedFilter.isActive()) {
             feedFilter.block(lpparam.classLoader);
+        }
+        if (prefs.getBoolean(Prefs.KEY_STOP_VIDEO_LOOPING, Prefs.DEFAULT_STOP_VIDEO_LOOPING)) {
+            new StopVideoLoopingBlocker().block(lpparam.classLoader);
         }
 
         if (prefs.getBoolean(Prefs.KEY_AD_BLOCKER, Prefs.DEFAULT_AD_BLOCKER)) {
