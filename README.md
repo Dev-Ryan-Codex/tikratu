@@ -88,6 +88,28 @@ Integración a `WatermarkBlocker` (no se creó una app aparte — se integró di
 
 **Conclusión**: ni el swap de campo de TikTok ni la resolución externa vía tikwm.com producen hoy un archivo sin marca, para esta cuenta/región/fecha. No se puede afirmar con certeza *por qué* falla tikwm.com específicamente (podría ser que su endpoint `hdplay` ya no sirva contenido limpio, medidas anti-scraping recientes de TikTok, o un problema puntual de su servicio) — no hay forma de depurar el lado servidor de un tercero. Se deja el código de `TikwmResolver` activo (no rompe nada, es un intento best-effort con fallback seguro) pero la UI (`strings.xml`) y esta tabla reflejan honestamente que no funciona hoy, en vez de prometer un resultado no verificado.
 
+### Fix intentado #3: diff contra el mod original + tres campos de descarga nunca antes probados
+
+A pedido explícito del profesor, se comparó el código real de descarga entre el TikTok 46.4.3 oficial (sin modificar) y `46.4.3_universal_fix.apk` (el mod), extrayendo todos los `classes*.dex` de ambos APKs y buscando por string exacto (`download_no_watermark_addr`, `getDownloadAddr`, `getDownloadNoWatermarkAddr`) en cada archivo por separado. **Resultado: el mod usa exactamente el mismo `Video.java` sin modificar** (mismos getters, mismo dex `classes25.dex` en ambos) — no hay ningún parche de código adicional que replicar. Confirma lo que ya se sospechaba: el mod funcionaba porque en su época (46.4.3) el campo `download_no_watermark_addr` sí devolvía contenido limpio, no porque tuviera una técnica distinta a la nuestra.
+
+De paso, comparando el modelo protobuf equivalente de `Video` (clase ofuscada `X.C05OL`/`X.C5206024e` según el build, en `classes3.dex` de TikTok 47.0.3 oficial y en `classes.dex` del mod) se encontró un catálogo de campos de descarga bastante más amplio que el par ya conocido:
+
+```
+download_addr                      -> getDownloadAddr()            (con marca, ya conocido)
+new_download_addr                  -> getNewDownloadAddr()          NUEVO, nunca probado
+download_suffix_logo_addr          -> (sin getter Gson, solo protobuf, no alcanzable desde este hook)
+has_download_suffix_logo_addr      -> (idem, flag booleano acompañante)
+ui_alike_download_addr             -> getUIAlikeDownloadAddr()      NUEVO, nunca probado
+caption_download_addr              -> getCaptionDownloadAddr()     NUEVO, nunca probado
+misc_download_addrs                -> (sin getter Gson, solo protobuf, tipo String — posible JSON anidado)
+download_no_watermark_addr         -> getDownloadNoWatermarkAddr() (confirmado roto)
+play_addr_3d_fallback              -> (para contenido 3D, no aplica al caso general)
+```
+
+De los tres nuevos campos alcanzables desde Gson (`newDownloadAddr`, `uiAlikeAddr`, `captionDownloadAddr`), se implementó una cascada en `WatermarkBlocker` que los prueba en ese orden antes de tikwm.com y el swap viejo, con logging de diagnóstico de las 4 URLs candidatas en cada llamada. **Probado en dispositivo real con 2 videos de cuentas distintas (2026-09-27): los tres campos nuevos llegan `null` en ambos casos** — el servidor no los está poblando para esta cuenta/sesión/momento (podría ser un campo activo solo bajo otro experimento A/B, solo para ciertas cuentas/regiones, o solo alcanzable realmente por la vía protobuf y no por la vía JSON que usa nuestro hook). No se descarta que en otra cuenta/región/versión sí vengan poblados — el código queda activo por si acaso, sin costo (si son null, cae al siguiente candidato).
+
+**Conclusión final de esta investigación extendida**: se agotaron todas las vías de swap-de-campo-del-servidor conocidas (2 campos originales + 3 nuevos descubiertos) y la resolución vía servicio de terceros (tikwm.com) — ninguna produce hoy un archivo sin marca para esta cuenta/dispositivo. El hook queda con la cascada completa activa (no hace daño, prioriza el mejor candidato disponible en cada caso) pero sin prometer un resultado que no se puede confirmar.
+
 ### Por qué NO se replicaron otros hallazgos del mod analizado
 
 El mod original (`C:\Audit\equipos\tiktok apk\README.md`) parcheaba y re-firmaba el APK. TikRatu nunca toca el binario de TikTok, así que varios de sus hallazgos no tienen equivalente acá:
