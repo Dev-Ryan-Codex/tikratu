@@ -10,6 +10,39 @@ Ver [DISCLAIMER.md](DISCLAIMER.md) antes de usarlo.
 
 Nace del análisis de un mod de terceros para TikTok (repack cerrado, re-firmado con certificado ajeno, con protección de código nativo tipo VM) hecho como trabajo de la materia **Protección de Software**. La idea de TikRatu es lograr una funcionalidad similar (por ahora: sacar el flag de "esto es un anuncio" del feed) de forma **abierta, auditable y sin tocar el binario de TikTok**, usando la técnica de hooking en runtime en vez de parchear+re-firmar un APK.
 
+## Catálogo completo del plugin de referencia (capturas 2026-09-27)
+
+Del "TikTok Plugin" de las capturas (`C:\Audit\equipos\tiktok apk\img tiktok plugin`), catalogado íntegro y clasificado:
+
+**Ya implementadas en TikRatu** (nombre real de la captura -> feature nuestra):
+- Eliminar anuncios en para ti -> `AdBlocker`
+- Quitar anuncios encubiertos (parcial, ver nota) -> `AdSignalsBlocker`
+- Purificar los enlaces -> `UrlSanitizerBlocker`
+- Renovación automática de la racha -> `StreakReminderScheduler` (versión acotada: solo recordatorio local, no auto-envío — ver "Por qué NO se replicaron otros hallazgos")
+- Descargar video/foto sin marca -> `WatermarkBlocker`/`PhotoWatermarkBlocker` (rotos hoy, ver sección dedicada)
+
+**Pendientes, técnicamente viables** (requieren la misma pieza de infraestructura: un filtro a nivel de *adaptador de feed*, no el getter de tipo en sí — ver nota de seguridad de discriminadores de tipo, sección "Cómo funciona el hook de ads"):
+- Quitar directos (ocultar LIVE en Para ti)
+- Eliminar presentación (ocultar posts photo-mode/slideshow del feed)
+- Ocultar los videos de la Tienda de TikTok (Shop)
+- Remove Recommendations
+- Quitar historias (Stories)
+- Ocultar publicaciones largas (por duración, `Video.getDuration()` ya confirmado existente)
+- Filtrar por Vistas y Me gusta
+- Lista de bloqueo de descripción (caption blocklist)
+
+**Pendientes, requieren su propia investigación (no el filtro de feed)**:
+- Región / Forzar modo de región
+- Remove Pendant Banners / Remove Tako AI (elementos de UI específicos, no flags de datos)
+- Dejar de reproducir en bucle (hook del lifecycle del reproductor, no del modelo)
+- Always Show Publish Date (formateo de fecha, no encontrado un formatter estable — ver intento previo)
+- Estilo de fuente (Typeface factory)
+- Quitar anuncios de pestaña Siguiente/Search/Explorar (podrían depender de las mismas señales `isAd`/`isSoftAd` ya cubiertas, o tener flags propios por pestaña — no verificado)
+
+**Descartada**: Hide CAPTCHA popups (ver "Features descartadas por falta de hook seguro").
+
+**N/A — específico de la propia app companion re-firmada del plugin, sin equivalente en nuestra arquitectura de hook puro**: Actualizar al privado (modelo freemium), Download Via MAX, Ruta de descargas de vídeos/imágenes (elegimos no interceptar el guardado de archivos), Modo nocturno, Idioma, TikTok Web, Corregir enlaces del navegador, Inicio de sesión de emergencia, Cargar configuración desde TikTok, Restablecer/Copia de seguridad/Restaurar, Aplicaciones predeterminadas, Botón flotante, Telegram Channel.
+
 ## Estado actual
 
 Columna "Estado real" = confirmado con logs de un dispositivo real (Android 16 / LineageOS + KernelSU Next + LSPosed), no solo análisis estático. Ver §"Pruebas en dispositivo real" para el detalle de cada uno.
@@ -188,6 +221,15 @@ En vez de perseguir esas clases inestables, `PhotoWatermarkBlocker` hookea **`Ph
 ## Recordatorio de streak (sin auto-envío)
 
 El mod original mandaba un mensaje real dentro de TikTok, sin que el usuario tocara nada (via hooks nativos ofuscados en `libtigrik.so`). TikRatu implementa una versión acotada e independiente en la app companion (`streak/StreakReminderScheduler.java`, `StreakReminderReceiver.java`, `BootReceiver.java`): programa una notificación local a una hora elegida por el usuario, que sobrevive reinicios. No hookea nada de TikTok ni automatiza ninguna interacción — el usuario sigue siendo quien manda el mensaje.
+
+## App companion: UI (rediseño 2026-09-27)
+
+El profesor acercó capturas reales de un "TikTok Plugin" de referencia (`C:\Audit\equipos\tiktok apk\img tiktok plugin`, 9 screenshots) con un diseño y catálogo de funciones más amplio que InstaEclipse. Se rediseñó la UI de TikRatu calcando ese estilo:
+
+- **Paleta**: negro puro (`#000000`) en vez de la rampa de superficies M3 que se usaba antes, con acento durazno/salmón (`#f0b8a0`) para switches ON y botones destacados, en vez del cian/rosa de TikTok.
+- **Lista de features**: filas planas sin `MaterialCardView` ni iconos (antes: card con ícono a la izquierda) — título + descripción a la izquierda, switch a la derecha, con separación por espaciado en vez de bordes.
+- **Navegación**: `BottomNavigationView` de 3 tabs (Inicio/Ajustes/Información) en vez de una pantalla única con botón atrás — mismo patrón que el plugin de referencia. "Ajustes" e "Información" tienen contenido real de TikRatu (link al repo, disclaimer, descripción del proyecto), no una copia 1:1 de las opciones del plugin (esas —modo nocturno, idioma, backup/restore de config, Telegram channel— son específicas de su propia app companion re-firmada, sin equivalente en nuestra arquitectura).
+- Verificado en dispositivo real (dump de pantalla vía ADB) tras un bug real encontrado y corregido: `BottomNavigationView` no garantiza que el primer ítem del menú quede seleccionado visualmente sin un `setSelectedItemId()` explícito — sin eso, abría en la tab "Información" por defecto.
 
 ## App companion: UI
 
