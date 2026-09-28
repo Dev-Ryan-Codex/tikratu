@@ -1,5 +1,33 @@
 <resources>
     <string name="app_name">TikRatu</string>
-    <string name="xposed_description">Módulo LSPosed para la app oficial de TikTok — quita anuncios del feed sin modificar ni redistribuir el APK.</string>
-    <string name="status_text">TikRatu no está activo dentro de TikTok todavía.\n\nActivá el módulo en LSPosed, marcá TikTok (com.zhiliaoapp.musically) en su alcance, y reiniciá la app.</string>
+    <string name="xposed_description">Módulo LSPosed para la app oficial de TikTok — anuncios y tracking desactivados, descargas sin marca de agua, sin modificar ni redistribuir el APK.</string>
+
+    <string name="back">Volver</string>
+    <string name="features">Funciones</string>
+    <string name="open_tiktok">Abrir TikTok</string>
+    <string name="view_features">Ver funciones</string>
+    <string name="tiktok_not_installed">TikTok no está instalado en este dispositivo</string>
+    <string name="how_to_use_title">Cómo usarlo</string>
+    <string name="how_to_use_body">Activá el módulo en LSPosed Manager, marcá com.zhiliaoapp.musically y dev.ryan.tikratu en su alcance, y reiniciá TikTok. Los cambios de switches necesitan reiniciar TikTok para tomar efecto.</string>
+
+    <string name="section_ads">Anuncios y tracking</string>
+    <string name="feature_ad_blocker_title">Quitar anuncios del feed</string>
+    <string name="feature_ad_blocker_desc">Aweme.isAd() siempre devuelve false</string>
+    <string name="feature_ads_id_title">Anular Advertising ID</string>
+    <string name="feature_ads_id_desc">AdvertisingIdClient.Info devuelve un UUID cero</string>
+    <string name="feature_ads_metadata_title">Ocultar App ID de AdMob</string>
+    <string name="feature_ads_metadata_desc">El SDK de Google Mobile Ads no se inicializa</string>
+    <string name="feature_location_title">Bloquear ubicación</string>
+    <string name="feature_location_desc">LocationManager siempre devuelve null en el proceso de TikTok</string>
+
+    <string name="section_media">Media</string>
+    <string name="feature_watermark_title">Video sin marca de agua</string>
+    <string name="feature_watermark_desc">Usa la URL download_no_watermark_addr que ya manda TikTok</string>
+    <string name="feature_photo_watermark_title">Fotos sin marca de agua</string>
+    <string name="feature_photo_watermark_desc">Cubre el post de foto/slideshow completo</string>
+
+    <string name="section_streak">Streak</string>
+    <string name="feature_streak_title">Recordatorio de streak</string>
+    <string name="feature_streak_desc">Notificación local, no manda nada por vos</string>
+    <string name="feature_streak_time_title">Hora del recordatorio</string>
 </resources>

@@ -96,15 +96,16 @@ En vez de perseguir esas clases inestables, `PhotoWatermarkBlocker` hookea **`Ph
 
 El mod original mandaba un mensaje real dentro de TikTok, sin que el usuario tocara nada (via hooks nativos ofuscados en `libtigrik.so`). TikRatu implementa una versión acotada e independiente en la app companion (`streak/StreakReminderScheduler.java`, `StreakReminderReceiver.java`, `BootReceiver.java`): programa una notificación local a una hora elegida por el usuario, que sobrevive reinicios. No hookea nada de TikTok ni automatiza ninguna interacción — el usuario sigue siendo quien manda el mensaje.
 
-## App companion: categorías + switches
+## App companion: UI
 
-La companion app (lo que ves al abrir el ícono de TikRatu, corriendo en su propio proceso, no dentro de TikTok) tiene:
+Rediseñada calcando el estilo real de **InstaEclipse 0.7.0** (se decodificó el APK con apktool para copiar su sistema de color M3 dark-only, el estilo de card plano `cardElevation=0dp` + `strokeWidth=0dp`, y la fila de feature icono+título+`MaterialSwitch` de `item_feature.xml`/`item_feature_header.xml`) — no es un preset de `androidx.preference` genérico. InstaEclipse es Apache-2.0, así que el patrón de diseño (no su ícono ni su nombre) se reutiliza legítimamente, con paleta propia:
 
-- **Card de estado**: si LSPosed está cargando el módulo de verdad (ver truco de detección abajo) + **versión de TikTok instalada** (`versionName` + `versionCode` leídos con `PackageManager.getPackageInfo`, requiere declarar `<queries>` en el manifest por las reglas de visibilidad de paquetes de Android 11+).
-- **Categoría "Anuncios y tracking"**: switches independientes para `AdBlocker`, `AdsIdBlocker`, `AdsMetadataBlocker`, `LocationBlocker` (`res/xml/prefs_ads.xml`).
-- **Categoría "Streak"**: switch de activar/desactivar + selector de hora (`res/xml/prefs_streak.xml`).
+- **Tema dark-only** (`themes.xml`/`colors.xml`): misma rampa neutra de superficies que InstaEclipse (`#17171b` → `#303038`), pero con **primary cian** (`#25F4EE`) y **secondary rojo/rosa** (`#ff8ea3`) de TikTok en vez de su violeta, más un **tertiary dorado** para la sección streak.
+- **Ícono propio** (`ic_launcher_foreground.xml`): un escudo (protección) en la misma técnica de desfase cromático cian/rojo que usa el logo de TikTok, pero con forma de escudo (no la nota musical) — ícono adaptativo, sin PNGs.
+- **`MainActivity`**: card de estado (`colorPrimaryContainer`, esquinas 20dp, sin elevación) con si LSPosed está cargando el módulo de verdad (ver truco de detección abajo) + **versión de TikTok instalada** (`versionName`/`versionCode` vía `PackageManager.getPackageInfo`, requiere `<queries>` en el manifest por las reglas de visibilidad de paquetes de Android 11+), botón "Abrir TikTok" y botón "Ver funciones", más una card "Cómo usarlo".
+- **`FeaturesActivity`**: una sola pantalla con **todos** los switches agrupados por header de sección (Anuncios y tracking / Media / Streak) — mismo patrón que la pantalla "Features" real de InstaEclipse (una lista con secciones, no una pantalla separada por categoría). Implementado a mano con `RecyclerView` + `FeatureAdapter` (`ui/FeatureItem.java`, `ui/FeatureAdapter.java`) en vez de `PreferenceFragmentCompat`, para poder calcar el look exacto de `item_feature.xml` (card plana, ícono 32dp, `MaterialSwitch`).
 
-Cada switch es un `SwitchPreferenceCompat` estándar de `androidx.preference` — se persiste solo en el archivo de SharedPreferences por defecto de la app. `Module.java` lee ese mismo archivo con `XSharedPreferences` al cargar en el proceso de TikTok, y solo instala el hook si el switch está prendido. **Importante**: como la lectura de prefs pasa una sola vez, al principio de `handleLoadPackage`, tocar un switch requiere **forzar el cierre de TikTok y volver a abrirlo** para que tome efecto (no hay refresco en caliente).
+Cada switch persiste en el archivo de SharedPreferences por defecto de la app (`utils/AppPrefs.java`, mismo nombre de archivo que usaba antes `PreferenceManager.getDefaultSharedPreferences` — se sacó esa dependencia, ya no hace falta). `Module.java` lee ese mismo archivo con `XSharedPreferences` al cargar en el proceso de TikTok, y solo instala el hook si el switch está prendido. **Importante**: como la lectura de prefs pasa una sola vez, al principio de `handleLoadPackage`, tocar un switch requiere **forzar el cierre de TikTok y volver a abrirlo** para que tome efecto (no hay refresco en caliente).
 
 ### Truco de "¿el módulo está activo?"
 
@@ -117,7 +118,7 @@ Cada switch es un `SwitchPreferenceCompat` estándar de `androidx.preference` �
 3. Instalar el APK en el celular con LSPosed.
 4. Activar el módulo en LSPosed Manager, marcar `com.zhiliaoapp.musically` **y `dev.ryan.tikratu`** en su alcance (el segundo es necesario para el truco de "¿está activo?" de arriba).
 5. Abrir TikRatu, confirmar que dice "Módulo activo" y que muestra la versión de TikTok instalada.
-6. Configurar los switches que quieras en cada categoría.
+6. Tocar "Ver funciones" y configurar los switches que quieras.
 7. Forzar el cierre de TikTok y volver a abrirlo para que los hooks tomen los valores actuales.
 8. Revisar logs con `adb logcat | grep TikRatu` o desde el visor de logs de LSPosed.
 
@@ -125,28 +126,28 @@ Cada switch es un `SwitchPreferenceCompat` estándar de `androidx.preference` �
 
 ```
 app/src/main/java/dev/ryan/tikratu/
-├── MainActivity.java                       # status card + versión de TikTok + categorías
-├── ui/SettingsActivity.java                 # host de las pantallas de preferencias
-├── ui/AdsPreferenceFragment.java            # switches de ads/tracking
-├── ui/MediaPreferenceFragment.java          # switch de watermark
-├── ui/StreakPreferenceFragment.java         # switch + hora del streak
+├── MainActivity.java                       # status card + versión de TikTok + "Abrir TikTok"/"Ver funciones"
+├── ui/FeaturesActivity.java                # única pantalla con todos los switches (secciones con headers)
+├── ui/FeatureItem.java                     # modelo (header / switch / action) para la lista
+├── ui/FeatureAdapter.java                  # RecyclerView.Adapter, calca item_feature.xml de InstaEclipse
 ├── Xposed/Module.java                      # entry point IXposedHookLoadPackage
 ├── mods/ads/AdBlocker.java                 # isAd() -> false (DexKit + directo)
 ├── mods/tracking/AdsIdBlocker.java         # Advertising ID -> cero
 ├── mods/tracking/AdsMetadataBlocker.java   # oculta el AdMob App ID
 ├── mods/tracking/LocationBlocker.java      # LocationManager -> null
 ├── mods/media/WatermarkBlocker.java        # getDownloadAddr() -> getDownloadNoWatermarkAddr()
-├── mods/media/PhotoWatermarkBlocker.java    # PhotoModeImageUrlModel: camino protobuf
+├── mods/media/PhotoWatermarkBlocker.java    # PhotoModeImageUrlModel: camino protobuf y JSON
 ├── streak/StreakReminderScheduler.java     # AlarmManager + SharedPreferences
 ├── streak/StreakReminderReceiver.java      # dispara la notificación
 ├── streak/BootReceiver.java                # re-arma el recordatorio tras reiniciar
 ├── utils/Prefs.java                        # keys de preferencias compartidas UI <-> hooks
+├── utils/AppPrefs.java                      # SharedPreferences por defecto (sin depender de androidx.preference)
 ├── utils/StatusChecker.java                 # truco de detección "¿está activo?"
 ├── utils/ModulePackage.java                 # nombre de paquete propio (para XSharedPreferences)
 └── utils/log/ModuleLog.java                # wrapper de XposedBridge.log
 ```
 
-Cada feature nueva va en `mods/<categoria>/<Nombre>Hook.java`, se agrega su switch en el `res/xml/prefs_<categoria>.xml` correspondiente (misma key en `utils/Prefs.java`), y se registra el gating en `Module.java`, igual que las que ya existen.
+Cada feature nueva va en `mods/<categoria>/<Nombre>Hook.java`, se agrega un `FeatureItem.toggle(...)` en `FeaturesActivity.buildItems()` bajo el header que corresponda (misma key en `utils/Prefs.java`), y se registra el gating en `Module.java`, igual que las que ya existen.
 
 ## Licencia
 

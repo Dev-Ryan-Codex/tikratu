@@ -7,11 +7,12 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
-import dev.ryan.tikratu.ui.SettingsActivity;
+import dev.ryan.tikratu.ui.FeaturesActivity;
 import dev.ryan.tikratu.utils.StatusChecker;
 
 public class MainActivity extends AppCompatActivity {
@@ -30,9 +31,9 @@ public class MainActivity extends AppCompatActivity {
 
         updateStatusCard();
 
-        findViewById(R.id.category_ads).setOnClickListener(v -> openCategory(SettingsActivity.CATEGORY_ADS));
-        findViewById(R.id.category_media).setOnClickListener(v -> openCategory(SettingsActivity.CATEGORY_MEDIA));
-        findViewById(R.id.category_streak).setOnClickListener(v -> openCategory(SettingsActivity.CATEGORY_STREAK));
+        findViewById(R.id.open_tiktok_button).setOnClickListener(v -> openTikTok());
+        findViewById(R.id.view_features_button).setOnClickListener(v ->
+                startActivity(new Intent(this, FeaturesActivity.class)));
     }
 
     @Override
@@ -41,10 +42,13 @@ public class MainActivity extends AppCompatActivity {
         updateStatusCard();
     }
 
-    private void openCategory(String category) {
-        Intent intent = new Intent(this, SettingsActivity.class);
-        intent.putExtra(SettingsActivity.EXTRA_CATEGORY, category);
-        startActivity(intent);
+    private void openTikTok() {
+        Intent launchIntent = getPackageManager().getLaunchIntentForPackage(TIKTOK_PACKAGE);
+        if (launchIntent != null) {
+            startActivity(launchIntent);
+        } else {
+            Toast.makeText(this, R.string.tiktok_not_installed, Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void updateStatusCard() {
@@ -67,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
                     : info.versionCode;
             return "TikTok instalado: " + info.versionName + " (" + versionCode + ")";
         } catch (PackageManager.NameNotFoundException e) {
-            return "TikTok no está instalado en este dispositivo";
+            return getString(R.string.tiktok_not_installed);
         }
     }
 }

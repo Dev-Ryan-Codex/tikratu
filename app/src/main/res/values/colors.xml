@@ -1,0 +1,36 @@
+<resources>
+    <!-- Rampa de superficies neutra (misma idea de "elevación M3" que se ve en apps
+         de referencia del mismo género: InstaEclipse, WaEnhancer). -->
+    <color name="tr_background">#17171b</color>
+    <color name="tr_surface">#17171b</color>
+    <color name="tr_surface_low">#1c1c22</color>
+    <color name="tr_surface_container">#202027</color>
+    <color name="tr_surface_high">#26262e</color>
+    <color name="tr_surface_highest">#303038</color>
+    <color name="tr_surface_variant">#2c2c34</color>
+    <color name="tr_on_surface">#f2f2f5</color>
+    <color name="tr_on_surface_variant">#b8b8c0</color>
+    <color name="tr_outline">#45454f</color>
+    <color name="tr_outline_variant">#2c2c34</color>
+
+    <!-- Primary: cian de TikTok -->
+    <color name="tr_primary">#25F4EE</color>
+    <color name="tr_on_primary">#00302f</color>
+    <color name="tr_primary_container">#003734</color>
+    <color name="tr_on_primary_container">#6ffff8</color>
+
+    <!-- Secondary: rojo/rosa de TikTok -->
+    <color name="tr_secondary">#ff8ea3</color>
+    <color name="tr_on_secondary">#42071a</color>
+    <color name="tr_secondary_container">#5c1128</color>
+    <color name="tr_on_secondary_container">#ffd9e0</color>
+
+    <!-- Tertiary: dorado (categoría streak) -->
+    <color name="tr_tertiary">#f4c025</color>
+    <color name="tr_on_tertiary">#3a2b00</color>
+    <color name="tr_tertiary_container">#4a3900</color>
+    <color name="tr_on_tertiary_container">#ffe08a</color>
+
+    <color name="tr_error">#ff6b60</color>
+    <color name="tr_on_error">#3a0906</color>
+</resources>

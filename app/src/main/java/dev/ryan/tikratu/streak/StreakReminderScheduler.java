@@ -7,10 +7,9 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 
-import androidx.preference.PreferenceManager;
-
 import java.util.Calendar;
 
+import dev.ryan.tikratu.utils.AppPrefs;
 import dev.ryan.tikratu.utils.Prefs;
 
 /**
@@ -32,7 +31,7 @@ public final class StreakReminderScheduler {
     }
 
     private static SharedPreferences prefs(Context context) {
-        return PreferenceManager.getDefaultSharedPreferences(context);
+        return AppPrefs.get(context);
     }
 
     /** Prende o apaga el recordatorio (llamado desde el switch de la UI). */
