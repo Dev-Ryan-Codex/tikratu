@@ -76,6 +76,7 @@ public class FeaturesActivity extends Activity {
             }
             return true;
         });
+        bottomNav.setSelectedItemId(R.id.nav_home);
     }
 
     private void showTab(View toShow, int titleRes) {
