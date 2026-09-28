@@ -67,6 +67,23 @@ public class Module implements IXposedHookLoadPackage, IXposedHookZygoteInit {
 
         ModuleLog.line("(TikRatu): cargando en " + lpparam.packageName + " (proceso " + lpparam.processName + ")");
 
+        // ModulePrefsReader necesita un Context real (AndroidAppHelper.
+        // currentApplication()) para consultar PrefsProvider via Binder IPC.
+        // Confirmado en dispositivo real: en handleLoadPackage ese Context
+        // TODAVIA no existe (currentApplication() devuelve null aqui mismo).
+        // El primer punto garantizado donde SI existe es Application.attach(),
+        // que Android llama con el Context base antes de Application.onCreate() —
+        // se difiere toda la logica de instalacion de hooks hasta ahi.
+        XposedHelpers.findAndHookMethod(android.app.Application.class, "attach", android.content.Context.class,
+                new XC_MethodHook() {
+                    @Override
+                    protected void afterHookedMethod(MethodHookParam param) {
+                        installHooks(lpparam);
+                    }
+                });
+    }
+
+    private void installHooks(XC_LoadPackage.LoadPackageParam lpparam) {
         ModulePrefsReader prefs = new ModulePrefsReader();
 
         if (prefs.getBoolean(Prefs.KEY_ADS_ID_BLOCKER, Prefs.DEFAULT_ADS_ID_BLOCKER)) {
