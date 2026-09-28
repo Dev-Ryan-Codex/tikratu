@@ -83,7 +83,8 @@ Columna "Estado real" = confirmado con logs de un dispositivo real (Android 16 /
 | Marca de agua en video (`WatermarkBlocker`) | 🟢 **RESUELTA y confirmada (2026-09-28)** con `getTranscode()=1` (técnica de SexAlloy) — video de creador simple (@Holdrich) descargado sin la marca flotante "TikTok @usuario" en 4 frames (`docs/evidencia/watermark_resuelto_transcode_2026-09-28.png`). Es el fix que faltó toda la sesión; los swaps de URL no servían |
 | Marca de agua en foto (`PhotoWatermarkBlocker`) | 🟢 Hook carga — no probado con un post de foto real |
 | Forzar descarga habilitada (`DownloadUnlockBlocker`) | 🟢 Hook carga (`isPreventDownload`) |
-| Filtro de feed (`FeedFilterBlocker`) | 🟢 **Probado**: "Quitar directos" → `2 de 9 items filtrados`. Cubre directos/historias/Tienda/fotos/largos/vistas/likes/palabras |
+| Filtro de feed (`FeedFilterBlocker`) | 🟢 **Probado**: `4 de 9 items filtrados` con todo activo. Cubre directos/historias/Tienda/fotos/**música promocionada**/largos/vistas/likes/palabras |
+| Quitar login obligatorio (`DisableLoginBlocker`) | 🟢 Hook carga — `2 gate(s) de login forzado desactivados` (`MandatoryLoginService`) |
 | Dejar de reproducir en bucle (`StopVideoLoopingBlocker`) | 🟢 Hook carga (`TTVideoEngine.setLooping`) |
 | No detectar capturas (`ScreenCaptureBlocker`) | 🟢 Hook carga (2 métodos de `Activity`) |
 | Estilo de fuente (`FontStyleBlocker`) | 🟢 **Confirmado visualmente** — el texto del feed cambia de tipografía |
