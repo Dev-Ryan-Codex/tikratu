@@ -101,9 +101,14 @@ public class FeedFilterBlocker {
             XposedHelpers.findAndHookMethod(FEED_ITEM_LIST, classLoader, "getItems", new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) {
+                    // Confirmado en dispositivo real: getItems() se llama decenas de
+                    // veces por lote. Se limpia el campo de origen una vez (las
+                    // llamadas siguientes ya no encuentran nada que sacar) y se
+                    // filtra tambien el valor devuelto por si ya era una copia.
+                    filterFeedItemList(param.thisObject);
                     Object result = param.getResult();
                     if (result instanceof List) {
-                        List<Object> filtered = filterList((List<?>) result);
+                        List<Object> filtered = filterList((List<?>) result, false);
                         if (filtered != null) param.setResult(filtered);
                     }
                 }
@@ -119,7 +124,7 @@ public class FeedFilterBlocker {
         try {
             Object raw = XposedHelpers.getObjectField(feedItemList, "items");
             if (!(raw instanceof List)) return;
-            List<Object> filtered = filterList((List<?>) raw);
+            List<Object> filtered = filterList((List<?>) raw, true);
             if (filtered != null) XposedHelpers.setObjectField(feedItemList, "items", filtered);
         } catch (Throwable t) {
             ModuleLog.line("(TikRatu | FeedFilterBlocker): error filtrando (" + t.getMessage() + ")");
@@ -127,7 +132,7 @@ public class FeedFilterBlocker {
     }
 
     /** Devuelve una lista nueva sin los items a ocultar, o null si no hay nada que sacar. */
-    private List<Object> filterList(List<?> items) {
+    private List<Object> filterList(List<?> items, boolean log) {
         List<Object> kept = new ArrayList<>(items.size());
         int removed = 0;
         for (Object item : items) {
@@ -138,7 +143,9 @@ public class FeedFilterBlocker {
             }
         }
         if (removed == 0) return null;
-        ModuleLog.line("(TikRatu | FeedFilterBlocker): " + removed + " de " + items.size() + " items filtrados");
+        if (log) {
+            ModuleLog.line("(TikRatu | FeedFilterBlocker): " + removed + " de " + items.size() + " items filtrados");
+        }
         return kept;
     }
 

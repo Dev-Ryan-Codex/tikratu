@@ -10,6 +10,22 @@ Ver [DISCLAIMER.md](DISCLAIMER.md) antes de usarlo.
 
 Nace del análisis de un mod de terceros para TikTok (repack cerrado, re-firmado con certificado ajeno, con protección de código nativo tipo VM) hecho como trabajo de la materia **Protección de Software**. La idea de TikRatu es lograr una funcionalidad similar (por ahora: sacar el flag de "esto es un anuncio" del feed) de forma **abierta, auditable y sin tocar el binario de TikTok**, usando la técnica de hooking en runtime en vez de parchear+re-firmar un APK.
 
+## Fix de fondo: los toggles no llegaban a TikTok (2026-09-28)
+
+Probando el primer toggle con default `false` se descubrió que **ningún toggle llegaba de verdad al proceso de TikTok** — los de default `true` solo "funcionaban" por coincidencia con el fallback. Cadena de causas, todas confirmadas en el dispositivo:
+
+1. `Context.getSharedPreferences()` nunca creaba `shared_prefs/*.xml` en este SO (listado real de `dataDir`: solo `cache/`, `code_cache/`, `files/`) → `XSharedPreferences` no tenía archivo que leer.
+2. Un archivo propio (`files/tikratu_prefs.properties`, world-readable, verificado con `run-as`) tampoco sirve: TikTok recibe `ENOENT` — aislamiento de namespace de montaje por app, no permisos.
+3. Solución: `PrefsProvider` (ContentProvider, Binder IPC). `AndroidAppHelper.currentApplication()` es `null` en `handleLoadPackage` e incluso dentro de `Application.attach()`, así que la instalación de hooks se difiere a `Application.attach()` y se usa `param.thisObject` como Context.
+
+Confirmado en logcat: `prefs leidas via PrefsProvider`.
+
+## Filtro de feed (2026-09-28)
+
+Punto de hook tomado del parche "Feed filter" de [icysymmetra/tiktok-patches-for-morphe](https://github.com/icysymmetra/tiktok-patches-for-morphe) (fork de ReVanced, vía [mentalblank/Tiktok-Revanced](https://github.com/mentalblank/Tiktok-Revanced)), verificado en 47.0.3 decompilando `classes4.dex`: `FeedApiService.fetchFeedList(...)` → `FeedItemList` (`public List<Aweme> items`, `getItems()`). `FeedFilterBlocker` saca items de esa lista antes del RecyclerView (no fuerza discriminadores de tipo globales). Criterios: directos, historias, Tienda, fotos/presentación, duración máxima (ms: ASUMIDO), mínimo de vistas, mínimo de likes, lista de palabras en la descripción.
+
+Confirmado en dispositivo con "Quitar directos" activo: `FeedFilterBlocker: 2 de 9 items filtrados`.
+
 ## Catálogo completo del plugin de referencia (capturas 2026-09-27)
 
 Del "TikTok Plugin" de las capturas (`C:\Audit\equipos\tiktok apk\img tiktok plugin`), catalogado íntegro y clasificado:
