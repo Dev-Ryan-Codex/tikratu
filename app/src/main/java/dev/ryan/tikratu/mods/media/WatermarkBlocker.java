@@ -3,6 +3,12 @@ package dev.ryan.tikratu.mods.media;
 import java.util.Collections;
 import java.util.Map;
 import java.util.WeakHashMap;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedHelpers;
@@ -64,6 +70,21 @@ public class WatermarkBlocker {
     // confirmamos en dispositivo real que solo se llama al tocar Descargar).
     private static final Map<Object, String> shareUrlByVideo = Collections.synchronizedMap(new WeakHashMap<>());
 
+    // getDownloadAddr() se confirmó en dispositivo real que corre en el hilo
+    // PRINCIPAL de TikTok (log: "main=true"). La llamada de red a tikwm.com no
+    // puede correr ahí directo (Android tira NetworkOnMainThreadException, y
+    // aunque no la tirara, bloquear el hilo principal arriesga un ANR). Se
+    // ejecuta en un hilo aparte con timeout total corto (bien por debajo del
+    // umbral de detección de ANR de Android para eventos táctiles, ~5s): si
+    // no llega a tiempo, se corta y se hace fallback sin haber bloqueado la
+    // UI de forma perceptible.
+    private static final ExecutorService NETWORK_EXECUTOR = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "TikRatu-tikwm");
+        t.setDaemon(true);
+        return t;
+    });
+    private static final long RESOLVE_TIMEOUT_MS = 2500;
+
     public void block(ClassLoader classLoader) {
         try {
             XposedHelpers.findAndHookMethod(AWEME_CLASS, classLoader, "getVideo",
@@ -95,10 +116,7 @@ public class WatermarkBlocker {
 
                             String shareUrl = shareUrlByVideo.get(param.thisObject);
                             if (shareUrl != null && original != null) {
-                                ModuleLog.line("(TikRatu | WatermarkBlocker): resolviendo via tikwm.com en hilo "
-                                        + Thread.currentThread().getName() + " (main=" + (android.os.Looper.myLooper() == android.os.Looper.getMainLooper()) + ")");
-                                TikwmResolver.Result resolved = TikwmResolver.resolve(shareUrl);
-                                String cleanUrl = resolved != null ? resolved.bestVideoUrl() : null;
+                                String cleanUrl = resolveWithTimeout(shareUrl);
                                 if (cleanUrl != null) {
                                     try {
                                         XposedHelpers.callMethod(original, "setUrlList", Collections.singletonList(cleanUrl));
@@ -130,6 +148,21 @@ public class WatermarkBlocker {
             ModuleLog.line("(TikRatu | WatermarkBlocker): hooked " + VIDEO_CLASS + ".getDownloadAddr()");
         } catch (Throwable t) {
             ModuleLog.line("(TikRatu | WatermarkBlocker): fallo el hook (" + t.getMessage() + ")");
+        }
+    }
+
+    private static String resolveWithTimeout(String shareUrl) {
+        Future<TikwmResolver.Result> future = NETWORK_EXECUTOR.submit((Callable<TikwmResolver.Result>) () -> TikwmResolver.resolve(shareUrl));
+        try {
+            TikwmResolver.Result result = future.get(RESOLVE_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+            return result != null ? result.bestVideoUrl() : null;
+        } catch (TimeoutException e) {
+            future.cancel(true);
+            ModuleLog.line("(TikRatu | WatermarkBlocker): tikwm.com no respondio en " + RESOLVE_TIMEOUT_MS + "ms, se corta");
+            return null;
+        } catch (Throwable t) {
+            ModuleLog.line("(TikRatu | WatermarkBlocker): error esperando tikwm.com (" + t.getMessage() + ")");
+            return null;
         }
     }
 
