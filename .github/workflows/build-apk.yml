@@ -39,7 +39,20 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
 
+      # Llave de firma fija desde secretos (el keystore no esta en el repo).
+      - name: Restore signing keystore
+        env:
+          KEYSTORE_B64: ${{ secrets.TIKRATU_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/tikratu.jks"
+            echo "TIKRATU_KEYSTORE_FILE=$RUNNER_TEMP/tikratu.jks" >> "$GITHUB_ENV"
+          fi
+
       - name: Build debug APK
+        env:
+          TIKRATU_KEYSTORE_PASSWORD: ${{ secrets.TIKRATU_KEYSTORE_PASSWORD }}
+          TIKRATU_KEY_ALIAS: ${{ secrets.TIKRATU_KEY_ALIAS }}
         run: ./gradlew assembleDebug
 
       - name: Upload APK to release

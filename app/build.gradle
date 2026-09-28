@@ -14,7 +14,29 @@ android {
         versionName '0.1.0'
     }
 
+    // Llave de firma fija: sin esto cada build de CI usa una debug key nueva,
+    // lo que obliga a desinstalar antes de instalar y resetea el scope de
+    // LSPosed. El keystore vive fuera del repo; CI lo recibe por secretos
+    // (TIKRATU_KEYSTORE_B64/PASSWORD/KEY_ALIAS, ver build-apk.yml). Sin las
+    // variables de entorno (build local), se usa la debug key normal.
+    def fixedKeystore = System.getenv("TIKRATU_KEYSTORE_FILE")
+    signingConfigs {
+        if (fixedKeystore != null && file(fixedKeystore).exists()) {
+            fixed {
+                storeFile file(fixedKeystore)
+                storePassword System.getenv("TIKRATU_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("TIKRATU_KEY_ALIAS")
+                keyPassword System.getenv("TIKRATU_KEYSTORE_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
+        debug {
+            if (fixedKeystore != null && file(fixedKeystore).exists()) {
+                signingConfig signingConfigs.fixed
+            }
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
