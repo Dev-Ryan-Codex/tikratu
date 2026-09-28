@@ -29,8 +29,12 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      # Los runners ubuntu-latest de GitHub ya traen el Android SDK
+      # preinstalado (ANDROID_HOME/ANDROID_SDK_ROOT), con las licencias
+      # aceptadas para las versiones que incluyen. No hace falta un paso
+      # extra para instalarlo — se probó primero con android-actions/setup-android@v3
+      # y falló porque intenta instalar el paquete legacy "tools", que ya no
+      # existe en el repositorio de Google.
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
