@@ -30,6 +30,12 @@ public final class Prefs {
     public static final String KEY_PHOTO_WATERMARK_BLOCKER = "pref_photo_watermark_blocker_enabled";
     public static final boolean DEFAULT_PHOTO_WATERMARK_BLOCKER = true;
 
+    public static final String KEY_DOWNLOAD_UNLOCK_BLOCKER = "pref_download_unlock_blocker_enabled";
+    public static final boolean DEFAULT_DOWNLOAD_UNLOCK_BLOCKER = true;
+
+    public static final String KEY_AD_SIGNALS_BLOCKER = "pref_ad_signals_blocker_enabled";
+    public static final boolean DEFAULT_AD_SIGNALS_BLOCKER = true;
+
     public static final String KEY_STREAK_ENABLED = "pref_streak_enabled";
     public static final boolean DEFAULT_STREAK_ENABLED = false;
 

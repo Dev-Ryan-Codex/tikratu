@@ -1,25 +1,49 @@
 package dev.ryan.tikratu.Xposed;
 
+import java.io.File;
+
 import org.luckypray.dexkit.DexKitBridge;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
+import de.robv.android.xposed.IXposedHookZygoteInit;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 import dev.ryan.tikratu.mods.ads.AdBlocker;
+import dev.ryan.tikratu.mods.ads.AdSignalsBlocker;
 import dev.ryan.tikratu.mods.tracking.AdsIdBlocker;
 import dev.ryan.tikratu.mods.tracking.AdsMetadataBlocker;
 import dev.ryan.tikratu.mods.tracking.LocationBlocker;
+import dev.ryan.tikratu.mods.media.DownloadUnlockBlocker;
 import dev.ryan.tikratu.mods.media.PhotoWatermarkBlocker;
 import dev.ryan.tikratu.mods.media.WatermarkBlocker;
 import dev.ryan.tikratu.utils.ModulePackage;
 import dev.ryan.tikratu.utils.Prefs;
 import dev.ryan.tikratu.utils.log.ModuleLog;
 
-public class Module implements IXposedHookLoadPackage {
+public class Module implements IXposedHookLoadPackage, IXposedHookZygoteInit {
 
     private static final String TARGET_PACKAGE = "com.zhiliaoapp.musically";
+
+    private static String moduleNativeLibDir;
+    private static boolean dexkitNativeLoaded;
+
+    /**
+     * Corre una sola vez, muy temprano, antes de que Zygote forkee ningun
+     * proceso de app. startupParam.modulePath es la ruta absoluta al APK de
+     * ESTE MISMO modulo en disco (dev.ryan.tikratu) — es la unica forma
+     * confiable de encontrar el .so de DexKit cuando este codigo termina
+     * corriendo INYECTADO dentro del proceso de TikTok (donde el classloader
+     * de Xposed no resuelve automaticamente la carpeta de libs nativas de
+     * nuestro propio paquete). Mismo patron que usa InstaEclipse para lo mismo.
+     */
+    @Override
+    public void initZygote(StartupParam startupParam) {
+        String apkDir = new File(startupParam.modulePath).getParent();
+        String abi = android.os.Build.SUPPORTED_ABIS[0];
+        moduleNativeLibDir = apkDir + "/lib/" + abi;
+    }
 
     @Override
     public void handleLoadPackage(XC_LoadPackage.LoadPackageParam lpparam) throws Throwable {
@@ -53,16 +77,35 @@ public class Module implements IXposedHookLoadPackage {
         if (prefs.getBoolean(Prefs.KEY_PHOTO_WATERMARK_BLOCKER, Prefs.DEFAULT_PHOTO_WATERMARK_BLOCKER)) {
             new PhotoWatermarkBlocker().block(lpparam.classLoader);
         }
+        if (prefs.getBoolean(Prefs.KEY_DOWNLOAD_UNLOCK_BLOCKER, Prefs.DEFAULT_DOWNLOAD_UNLOCK_BLOCKER)) {
+            new DownloadUnlockBlocker().block(lpparam.classLoader);
+        }
+        if (prefs.getBoolean(Prefs.KEY_AD_SIGNALS_BLOCKER, Prefs.DEFAULT_AD_SIGNALS_BLOCKER)) {
+            new AdSignalsBlocker().block(lpparam.classLoader);
+        }
 
         if (prefs.getBoolean(Prefs.KEY_AD_BLOCKER, Prefs.DEFAULT_AD_BLOCKER)) {
-            try (DexKitBridge bridge = DexKitBridge.create(lpparam.appInfo.sourceDir)) {
-                new AdBlocker().disableFeedAdFlag(bridge, lpparam.classLoader);
-                // Proximos hooks (watermark, duet/stitch, etc.) se agregan aca,
-                // uno por clase en dev.ryan.tikratu.mods.<categoria>, igual que AdBlocker.
+            try {
+                loadDexKitNativeLibrary();
+                try (DexKitBridge bridge = DexKitBridge.create(lpparam.appInfo.sourceDir)) {
+                    new AdBlocker().disableFeedAdFlag(bridge, lpparam.classLoader);
+                    // Proximos hooks (watermark, duet/stitch, etc.) se agregan aca,
+                    // uno por clase en dev.ryan.tikratu.mods.<categoria>, igual que AdBlocker.
+                }
             } catch (Throwable t) {
                 ModuleLog.line("(TikRatu): error inicializando DexKit: " + t.getMessage());
             }
         }
+    }
+
+    private static synchronized void loadDexKitNativeLibrary() {
+        if (dexkitNativeLoaded) return;
+        if (moduleNativeLibDir == null) {
+            throw new IllegalStateException("moduleNativeLibDir es null — initZygote no corrio (¿el modulo no esta en xposedscope de si mismo?)");
+        }
+        System.load(moduleNativeLibDir + "/libdexkit.so");
+        dexkitNativeLoaded = true;
+        ModuleLog.line("(TikRatu): libdexkit.so cargado desde " + moduleNativeLibDir);
     }
 
     /**

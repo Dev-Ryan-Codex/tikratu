@@ -60,6 +60,9 @@ public class FeaturesActivity extends Activity {
         list.add(FeatureItem.toggle(R.drawable.ic_block,
                 getString(R.string.feature_location_title), getString(R.string.feature_location_desc),
                 Prefs.KEY_LOCATION_BLOCKER, Prefs.DEFAULT_LOCATION_BLOCKER));
+        list.add(FeatureItem.toggle(R.drawable.ic_block,
+                getString(R.string.feature_ad_signals_title), getString(R.string.feature_ad_signals_desc),
+                Prefs.KEY_AD_SIGNALS_BLOCKER, Prefs.DEFAULT_AD_SIGNALS_BLOCKER));
 
         list.add(FeatureItem.header(getString(R.string.section_media)));
         list.add(FeatureItem.toggle(R.drawable.ic_download,
@@ -68,6 +71,9 @@ public class FeaturesActivity extends Activity {
         list.add(FeatureItem.toggle(R.drawable.ic_download,
                 getString(R.string.feature_photo_watermark_title), getString(R.string.feature_photo_watermark_desc),
                 Prefs.KEY_PHOTO_WATERMARK_BLOCKER, Prefs.DEFAULT_PHOTO_WATERMARK_BLOCKER));
+        list.add(FeatureItem.toggle(R.drawable.ic_download,
+                getString(R.string.feature_download_unlock_title), getString(R.string.feature_download_unlock_desc),
+                Prefs.KEY_DOWNLOAD_UNLOCK_BLOCKER, Prefs.DEFAULT_DOWNLOAD_UNLOCK_BLOCKER));
 
         list.add(FeatureItem.header(getString(R.string.section_streak)));
         list.add(FeatureItem.toggle(R.drawable.ic_notifications,

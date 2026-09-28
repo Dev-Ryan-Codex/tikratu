@@ -19,12 +19,16 @@
     <string name="feature_ads_metadata_desc">El SDK de Google Mobile Ads no se inicializa</string>
     <string name="feature_location_title">Bloquear ubicación</string>
     <string name="feature_location_desc">LocationManager siempre devuelve null en el proceso de TikTok</string>
+    <string name="feature_ad_signals_title">Quitar anuncios encubiertos</string>
+    <string name="feature_ad_signals_desc">Aweme.isSoftAd(), isPseudoAd() e isSearchPreciseAd() siempre devuelven false</string>
 
     <string name="section_media">Media</string>
     <string name="feature_watermark_title">Video sin marca de agua</string>
     <string name="feature_watermark_desc">Probado en dispositivo real: el hook reemplaza la URL pero TikTok sigue sirviendo el video con marca — no funciona hoy, ver README</string>
     <string name="feature_photo_watermark_title">Fotos sin marca de agua</string>
     <string name="feature_photo_watermark_desc">Mismo mecanismo que el de video — no probado todavía en un post de foto real</string>
+    <string name="feature_download_unlock_title">Forzar descarga habilitada</string>
+    <string name="feature_download_unlock_desc">Aweme.isPreventDownload() siempre devuelve false</string>
 
     <string name="section_streak">Streak</string>
     <string name="feature_streak_title">Recordatorio de streak</string>
