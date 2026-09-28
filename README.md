@@ -45,6 +45,12 @@ De paso, esta sesión de pruebas destapó **dos hooks que directamente no funcio
 
 **Herramientas instaladas en esta máquina durante la sesión** (quedan disponibles para la próxima): `adb` (Android Platform Tools, vía winget) y `ffmpeg` (para extraer frames de video y verificar visualmente el resultado de los downloads).
 
+### ¿Por qué el mod original (Rezvorck) sí lograba sacar la marca de agua?
+
+El mod analizado en `C:\Audit\equipos\tiktok apk\README.md` y su plugin usan **exactamente el mismo truco** que `WatermarkBlocker` (server manda dos URLs, se usa la que dice "no watermark"). No es una técnica distinta — es la misma. La diferencia más probable es **de tiempo**: ese mod/plugin apunta a TikTok **46.4.3**; esta sesión de pruebas se hizo contra la versión real instalada del dispositivo, **47.0.3**. ByteDance pelea activamente contra este tipo de mods y cambia el comportamiento del backend con frecuencia (por versión de app, o por rollout de servidor/A-B testing sin ni siquiera tocar el cliente). Es probable que el campo `download_no_watermark_addr` haya dejado de servir contenido limpio en algún punto entre esas dos versiones — algo que rompería la implementación de ellos tanto como la nuestra, ya que ambas dependen del mismo campo del servidor. Un mod comercial activo probablemente se actualiza seguido para encontrar el próximo endpoint/parámetro que sí funcione; acá estamos viendo una foto de un momento específico.
+
+Se intentó verificar bajando ambas URLs directo desde la PC (fuera del teléfono) para comparar los archivos byte a byte — ambas fallaron (404/400): estas URLs firmadas están atadas a la sesión/dispositivo que las pidió (IP, user-agent, y probablemente el `signaturev3` valida más que la URL en sí), no se pueden reproducir desde un cliente externo. Confirmar esta hipótesis con certeza requeriría correr el mod real en un dispositivo y diffear tráfico de red contra el nuestro — no se hizo en esta sesión.
+
 ### Por qué NO se replicaron otros hallazgos del mod analizado
 
 El mod original (`C:\Audit\equipos\tiktok apk\README.md`) parcheaba y re-firmaba el APK. TikRatu nunca toca el binario de TikTok, así que varios de sus hallazgos no tienen equivalente acá:
