@@ -3,7 +3,6 @@ package dev.ryan.tikratu.ui;
 import android.app.Activity;
 import android.app.TimePickerDialog;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
@@ -19,7 +18,6 @@ import java.util.List;
 
 import dev.ryan.tikratu.R;
 import dev.ryan.tikratu.streak.StreakReminderScheduler;
-import dev.ryan.tikratu.utils.AppPrefs;
 import dev.ryan.tikratu.utils.Prefs;
 
 /**
@@ -49,8 +47,7 @@ public class FeaturesActivity extends Activity {
         findViewById(R.id.btn_back).setOnClickListener(v -> finish());
         screenTitle = findViewById(R.id.tv_screen_title);
 
-        SharedPreferences prefs = AppPrefs.get(this);
-        items = buildItems(prefs);
+        items = buildItems();
 
         recyclerFeatures = findViewById(R.id.recycler_features);
         settingsContainer = findViewById(R.id.settings_container);
@@ -58,7 +55,7 @@ public class FeaturesActivity extends Activity {
 
         RecyclerView recycler = (RecyclerView) recyclerFeatures;
         recycler.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new FeatureAdapter(items, prefs);
+        adapter = new FeatureAdapter(items, this);
         recycler.setAdapter(adapter);
 
         findViewById(R.id.action_repo).setOnClickListener(v ->
@@ -86,7 +83,7 @@ public class FeaturesActivity extends Activity {
         screenTitle.setText(titleRes);
     }
 
-    private List<FeatureItem> buildItems(SharedPreferences prefs) {
+    private List<FeatureItem> buildItems() {
         List<FeatureItem> list = new ArrayList<>();
 
         list.add(FeatureItem.header(getString(R.string.section_ads)));

@@ -1,6 +1,6 @@
 package dev.ryan.tikratu.utils;
 
-/** Nombre de paquete de esta app, usado para abrir XSharedPreferences desde el hook. */
+/** Nombre de paquete de esta app, usado para ubicar el archivo de prefs desde el hook. */
 public final class ModulePackage {
     private ModulePackage() {
     }

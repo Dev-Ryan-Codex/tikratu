@@ -1,71 +1,97 @@
 package dev.ryan.tikratu.utils;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Properties;
 
 /**
- * Mismo nombre de archivo que usaba androidx.preference.PreferenceManager
- * .getDefaultSharedPreferences() ("<packageName>_preferences") — se mantiene
- * a mano para no depender de esa librería solo por este helper, y porque
- * XSharedPreferences(packageName) del lado Xposed asume exactamente ese
- * mismo nombre de archivo por defecto.
+ * BUG REAL ENCONTRADO EN DISPOSITIVO (2026-09-28): en este dispositivo/OS
+ * (Android 16 preview, targetSdk 36), Context.getSharedPreferences() NUNCA
+ * llega a crear el archivo shared_prefs/<pkg>_preferences.xml en disco —
+ * confirmado con un diagnostico que lista el contenido real de dataDir
+ * justo despues de un commit() (sincronico): solo aparecen cache/,
+ * code_cache/ y files/, nunca shared_prefs/. Esto rompe XSharedPreferences
+ * de raiz (lee un archivo XML que jamas se crea), independientemente de
+ * cualquier arreglo de permisos — no es un problema de permisos, es que
+ * el backend de SharedPreferences en este SO ya no persiste como XML
+ * plano de la forma clasica que XSharedPreferences espera.
  *
- * BUG REAL ENCONTRADO EN DISPOSITIVO (2026-09-28): XSharedPreferences.
- * makeWorldReadable() se llama desde Module.java, pero corre DENTRO del
- * proceso de TikTok (UID ajeno al nuestro) — en Linux un proceso no puede
- * hacer chmod sobre un archivo que no le pertenece, así que ese intento
- * fallaba en silencio. Confirmado en dispositivo real: todos los toggles
- * con default=true "parecían" funcionar solo porque XSharedPreferences,
- * al no poder leer el archivo, siempre devolvía el valor default — el
- * primer toggle con default=false (FontStyleBlocker) expuso que la
- * lectura cross-proceso nunca funcionó. Fix: quien SÍ puede hacer chmod
- * sobre este archivo es nuestra propia app (dueña del UID) — se llama a
- * fixPermissions() después de cada escritura real (commit(), no apply(),
- * para garantizar que el archivo ya esté en disco antes del chmod).
+ * Fix real: no usar SharedPreferences en absoluto para nada que TikTok
+ * necesite leer cross-proceso. Se implementa un archivo de propiedades
+ * propio (java.util.Properties, formato texto plano de toda la vida)
+ * bajo getFilesDir() — territorio que SI existe y es escribible/legible
+ * de forma predecible — con permisos world-readable puestos a mano por
+ * esta misma app (dueña real del archivo, unico proceso que puede
+ * hacerle chmod con exito).
  */
 public final class AppPrefs {
+    private static final String FILE_NAME = "tikratu_prefs.properties";
+
     private AppPrefs() {
     }
 
-    public static SharedPreferences get(Context context) {
-        return context.getSharedPreferences(context.getPackageName() + "_preferences", Context.MODE_PRIVATE);
+    public static File file(Context context) {
+        return new File(context.getFilesDir(), FILE_NAME);
     }
 
-    /** Llamar despues de cada escritura (via commit(), no apply()) para que TikTok pueda leerla. */
-    public static void fixPermissions(Context context) {
+    public static boolean getBoolean(Context context, String key, boolean defaultValue) {
+        String raw = load(context).getProperty(key);
+        return raw != null ? Boolean.parseBoolean(raw) : defaultValue;
+    }
+
+    public static int getInt(Context context, String key, int defaultValue) {
+        String raw = load(context).getProperty(key);
+        if (raw == null) return defaultValue;
         try {
-            File dataDir = new File(context.getApplicationInfo().dataDir);
-            File sharedPrefsDir = new File(dataDir, "shared_prefs");
-            File prefsFile = new File(sharedPrefsDir, context.getPackageName() + "_preferences.xml");
-
-            boolean dataDirOk = dataDir.setExecutable(true, false);
-            boolean sharedDirExecOk = sharedPrefsDir.setExecutable(true, false);
-            boolean sharedDirReadOk = sharedPrefsDir.setReadable(true, false);
-            boolean fileReadOk = prefsFile.setReadable(true, false);
-
-            StringBuilder listing = new StringBuilder();
-            File[] top = dataDir.listFiles();
-            if (top != null) {
-                for (File f : top) {
-                    listing.append(f.getName()).append(f.isDirectory() ? "/ " : " ");
-                }
-            }
-            android.util.Log.i("TikRatu-diag", "fixPermissions: dataDir=" + dataDir.getAbsolutePath()
-                    + " exists=" + dataDir.exists()
-                    + " | contenido=[" + listing + "]"
-                    + " | getFilesDir=" + context.getFilesDir().getAbsolutePath()
-                    + " | getDataDir=" + (android.os.Build.VERSION.SDK_INT >= 24 ? context.getDataDir().getAbsolutePath() : "N/A")
-                    + " | sharedPrefsDir exists=" + sharedPrefsDir.exists()
-                    + " | prefsFile=" + prefsFile.getAbsolutePath() + " exists=" + prefsFile.exists()
-                    + " canRead=" + prefsFile.canRead()
-                    + " | setExecutable(dataDir)=" + dataDirOk
-                    + " setExecutable(sharedDir)=" + sharedDirExecOk
-                    + " setReadable(sharedDir)=" + sharedDirReadOk
-                    + " setReadable(file)=" + fileReadOk);
-        } catch (Throwable t) {
-            android.util.Log.i("TikRatu-diag", "fixPermissions fallo: " + t);
+            return Integer.parseInt(raw);
+        } catch (NumberFormatException e) {
+            return defaultValue;
         }
+    }
+
+    public static void putBoolean(Context context, String key, boolean value) {
+        Properties props = load(context);
+        props.setProperty(key, String.valueOf(value));
+        save(context, props);
+    }
+
+    public static void putInt(Context context, String key, int value) {
+        Properties props = load(context);
+        props.setProperty(key, String.valueOf(value));
+        save(context, props);
+    }
+
+    private static Properties load(Context context) {
+        Properties props = new Properties();
+        File f = file(context);
+        if (f.exists()) {
+            try (FileInputStream in = new FileInputStream(f)) {
+                props.load(in);
+            } catch (IOException ignored) {
+                // Archivo corrupto/ilegible - se sigue con props vacio (defaults).
+            }
+        }
+        return props;
+    }
+
+    private static void save(Context context, Properties props) {
+        File f = file(context);
+        try (FileOutputStream out = new FileOutputStream(f)) {
+            props.store(out, null);
+            out.flush();
+            out.getFD().sync();
+        } catch (IOException ignored) {
+            return;
+        }
+        // Permisos world-readable puestos por esta misma app (dueña del
+        // archivo) - un proceso ajeno (TikTok) no puede hacer chmod sobre
+        // un archivo que no le pertenece, por eso esto no puede hacerse
+        // del lado de Module.java.
+        context.getFilesDir().setExecutable(true, false);
+        f.setReadable(true, false);
     }
 }

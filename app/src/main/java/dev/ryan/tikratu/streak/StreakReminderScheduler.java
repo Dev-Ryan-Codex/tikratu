@@ -4,7 +4,6 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Build;
 
 import java.util.Calendar;
@@ -30,14 +29,9 @@ public final class StreakReminderScheduler {
     private StreakReminderScheduler() {
     }
 
-    private static SharedPreferences prefs(Context context) {
-        return AppPrefs.get(context);
-    }
-
     /** Prende o apaga el recordatorio (llamado desde el switch de la UI). */
     public static void setEnabled(Context context, boolean enabled) {
-        prefs(context).edit().putBoolean(Prefs.KEY_STREAK_ENABLED, enabled).commit();
-        AppPrefs.fixPermissions(context);
+        AppPrefs.putBoolean(context, Prefs.KEY_STREAK_ENABLED, enabled);
         if (enabled) {
             armNextAlarm(context, getHour(context), getMinute(context));
         } else {
@@ -47,25 +41,23 @@ public final class StreakReminderScheduler {
 
     /** Cambia la hora guardada. Si el recordatorio ya estaba activo, lo reprograma. */
     public static void setTime(Context context, int hour, int minute) {
-        prefs(context).edit()
-                .putInt(Prefs.KEY_STREAK_HOUR, hour)
-                .putInt(Prefs.KEY_STREAK_MINUTE, minute)
-                .apply();
+        AppPrefs.putInt(context, Prefs.KEY_STREAK_HOUR, hour);
+        AppPrefs.putInt(context, Prefs.KEY_STREAK_MINUTE, minute);
         if (isEnabled(context)) {
             armNextAlarm(context, hour, minute);
         }
     }
 
     public static boolean isEnabled(Context context) {
-        return prefs(context).getBoolean(Prefs.KEY_STREAK_ENABLED, Prefs.DEFAULT_STREAK_ENABLED);
+        return AppPrefs.getBoolean(context, Prefs.KEY_STREAK_ENABLED, Prefs.DEFAULT_STREAK_ENABLED);
     }
 
     public static int getHour(Context context) {
-        return prefs(context).getInt(Prefs.KEY_STREAK_HOUR, Prefs.DEFAULT_STREAK_HOUR);
+        return AppPrefs.getInt(context, Prefs.KEY_STREAK_HOUR, Prefs.DEFAULT_STREAK_HOUR);
     }
 
     public static int getMinute(Context context) {
-        return prefs(context).getInt(Prefs.KEY_STREAK_MINUTE, Prefs.DEFAULT_STREAK_MINUTE);
+        return AppPrefs.getInt(context, Prefs.KEY_STREAK_MINUTE, Prefs.DEFAULT_STREAK_MINUTE);
     }
 
     /** Llamado por StreakReminderReceiver despues de mostrar la notificacion, y por BootReceiver. */

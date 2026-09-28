@@ -7,7 +7,6 @@ import org.luckypray.dexkit.DexKitBridge;
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.IXposedHookZygoteInit;
 import de.robv.android.xposed.XC_MethodHook;
-import de.robv.android.xposed.XSharedPreferences;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 import dev.ryan.tikratu.mods.ads.AdBlocker;
@@ -68,19 +67,7 @@ public class Module implements IXposedHookLoadPackage, IXposedHookZygoteInit {
 
         ModuleLog.line("(TikRatu): cargando en " + lpparam.packageName + " (proceso " + lpparam.processName + ")");
 
-        XSharedPreferences prefs = new XSharedPreferences(ModulePackage.NAME);
-        prefs.makeWorldReadable();
-        prefs.reload();
-
-        try {
-            java.io.File f = prefs.getFile();
-            ModuleLog.line("(TikRatu | diag): prefs file=" + f.getAbsolutePath()
-                    + " exists=" + f.exists() + " canRead=" + f.canRead()
-                    + " length=" + f.length() + " lastModified=" + f.lastModified()
-                    + " | fontStyle(raw)=" + prefs.getBoolean(Prefs.KEY_FONT_STYLE_BLOCKER, Prefs.DEFAULT_FONT_STYLE_BLOCKER));
-        } catch (Throwable t) {
-            ModuleLog.line("(TikRatu | diag): fallo leyendo diagnostico (" + t + ")");
-        }
+        ModulePrefsReader prefs = new ModulePrefsReader(ModulePackage.NAME);
 
         if (prefs.getBoolean(Prefs.KEY_ADS_ID_BLOCKER, Prefs.DEFAULT_ADS_ID_BLOCKER)) {
             new AdsIdBlocker().block(lpparam.classLoader);

@@ -1,11 +1,10 @@
 package dev.ryan.tikratu.utils;
 
 /**
- * Nombres de key/valores por defecto compartidos entre la UI (SwitchPreferenceCompat
- * en res/xml/prefs_*.xml, que persisten en el archivo de preferencias por defecto de
- * la app) y el lado Xposed (que los lee con XSharedPreferences dentro del proceso de
- * TikTok). Los nombres de key ACA deben coincidir letra por letra con los
- * android:key="..." de los XML de preferencias — no hay binding automático.
+ * Nombres de key/valores por defecto compartidos entre la UI (FeatureAdapter,
+ * que persiste via AppPrefs — ver ese archivo para el porque NO se usa
+ * SharedPreferences de Android) y el lado Xposed (Xposed/ModulePrefsReader,
+ * que lee el mismo archivo directamente dentro del proceso de TikTok).
  */
 public final class Prefs {
 

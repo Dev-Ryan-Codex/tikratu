@@ -1,6 +1,6 @@
 package dev.ryan.tikratu.ui;
 
-import android.content.SharedPreferences;
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,11 +23,11 @@ public class FeatureAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     private static final int TYPE_ACTION = 2;
 
     private final List<FeatureItem> items;
-    private final SharedPreferences prefs;
+    private final Context context;
 
-    public FeatureAdapter(List<FeatureItem> items, SharedPreferences prefs) {
+    public FeatureAdapter(List<FeatureItem> items, Context context) {
         this.items = items;
-        this.prefs = prefs;
+        this.context = context;
     }
 
     @Override
@@ -71,14 +71,10 @@ public class FeatureAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             row.switchView.setVisibility(View.VISIBLE);
             row.actionGroup.setVisibility(View.GONE);
             row.switchView.setOnCheckedChangeListener(null);
-            row.switchView.setChecked(prefs.getBoolean(item.prefKey, item.defaultValue));
+            row.switchView.setChecked(AppPrefs.getBoolean(context, item.prefKey, item.defaultValue));
             row.itemView.setOnClickListener(v -> row.switchView.toggle());
             row.switchView.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                // commit() (sincronico) en vez de apply(): necesitamos que el
-                // archivo ya este en disco antes de fixPermissions(), o el chmod
-                // corre sobre un archivo que todavia no existe.
-                prefs.edit().putBoolean(item.prefKey, isChecked).commit();
-                AppPrefs.fixPermissions(buttonView.getContext());
+                AppPrefs.putBoolean(context, item.prefKey, isChecked);
                 if (item.onToggle != null) item.onToggle.onToggle(isChecked);
             });
         } else {
