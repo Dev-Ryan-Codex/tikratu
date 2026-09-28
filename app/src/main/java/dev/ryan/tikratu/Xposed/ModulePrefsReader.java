@@ -1,37 +1,56 @@
 package dev.ryan.tikratu.Xposed;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.Properties;
+import android.app.AndroidAppHelper;
+import android.content.Context;
+import android.database.Cursor;
+import android.net.Uri;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import dev.ryan.tikratu.utils.log.ModuleLog;
 
 /**
- * Reemplaza XSharedPreferences (descartado — ver AppPrefs.java para el
- * detalle completo del bug real encontrado en dispositivo: en este OS,
- * Context.getSharedPreferences() nunca crea el archivo XML clasico que
- * XSharedPreferences necesita leer). Lee directamente el archivo de
- * propiedades propio que escribe AppPrefs, con el mismo formato
- * java.util.Properties.
+ * Reemplaza XSharedPreferences (descartado) Y la primera version de este
+ * archivo (leer el archivo de propiedades directo — TAMBIEN descartado).
+ * Ver PrefsProvider.java para el detalle completo: leer directamente un
+ * archivo de otra app falla con ENOENT desde el proceso de TikTok, por
+ * aislamiento de namespace de montaje de Android moderno — ni XML clasico
+ * (XSharedPreferences) ni un archivo propio (intento anterior) pueden
+ * cruzar ese limite. Un ContentProvider (Binder IPC real) si puede.
  */
 final class ModulePrefsReader {
 
-    private final Properties props = new Properties();
+    private static final String AUTHORITY = "dev.ryan.tikratu.prefs";
+    private final Map<String, String> values = new HashMap<>();
 
-    ModulePrefsReader(String modulePackageName) {
-        File f = new File("/data/user/0/" + modulePackageName + "/files/tikratu_prefs.properties");
-        try (FileInputStream in = new FileInputStream(f)) {
-            props.load(in);
-            ModuleLog.line("(TikRatu): prefs cargadas desde " + f.getAbsolutePath());
-        } catch (IOException e) {
-            ModuleLog.line("(TikRatu): no se pudo leer " + f.getAbsolutePath() + " (" + e.getMessage()
-                    + ") — se usan los valores por defecto de cada feature");
+    ModulePrefsReader() {
+        try {
+            Context context = AndroidAppHelper.currentApplication();
+            if (context == null) {
+                ModuleLog.line("(TikRatu): AndroidAppHelper.currentApplication() es null — se usan los valores por defecto de cada feature");
+                return;
+            }
+            Uri uri = Uri.parse("content://" + AUTHORITY + "/all");
+            try (Cursor cursor = context.getContentResolver().query(uri, null, null, null, null)) {
+                if (cursor == null) {
+                    ModuleLog.line("(TikRatu): PrefsProvider devolvio cursor null — se usan los valores por defecto de cada feature");
+                    return;
+                }
+                int keyIdx = cursor.getColumnIndexOrThrow("key");
+                int valueIdx = cursor.getColumnIndexOrThrow("value");
+                while (cursor.moveToNext()) {
+                    values.put(cursor.getString(keyIdx), cursor.getString(valueIdx));
+                }
+                ModuleLog.line("(TikRatu): prefs leidas via PrefsProvider (" + values.size() + " keys)");
+            }
+        } catch (Throwable t) {
+            ModuleLog.line("(TikRatu): fallo consultando PrefsProvider (" + t + ") — se usan los valores por defecto de cada feature");
         }
     }
 
     boolean getBoolean(String key, boolean defaultValue) {
-        String raw = props.getProperty(key);
+        String raw = values.get(key);
         return raw != null ? Boolean.parseBoolean(raw) : defaultValue;
     }
 }

@@ -32,6 +32,16 @@
             android:exported="false"
             android:label="@string/features" />
 
+        <!-- exported=true a proposito: TikTok (proceso ajeno, corre nuestro codigo
+             inyectado via LSPosed) necesita consultar esto por Binder IPC — ver
+             PrefsProvider.java para el porque (aislamiento de namespace de montaje
+             rompe la lectura directa de archivos entre apps en este SO). Solo
+             lectura (query), sin datos sensibles (nombres de toggles on/off). -->
+        <provider
+            android:name=".PrefsProvider"
+            android:authorities="dev.ryan.tikratu.prefs"
+            android:exported="true" />
+
         <receiver android:name=".streak.StreakReminderReceiver" android:exported="false" />
 
         <receiver android:name=".streak.BootReceiver" android:exported="true">
@@ -50,9 +60,6 @@
         <meta-data
             android:name="xposedminversion"
             android:value="82" />
-        <meta-data
-            android:name="xposedsharedprefs"
-            android:value="true" />
         <meta-data
             android:name="xposedscope"
             android:resource="@array/target_app" />
