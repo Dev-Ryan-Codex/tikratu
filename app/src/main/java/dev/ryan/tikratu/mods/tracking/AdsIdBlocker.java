@@ -18,6 +18,12 @@ public class AdsIdBlocker {
     private static final String ZERO_UUID = "00000000-0000-0000-0000-000000000000";
 
     public void block(ClassLoader classLoader) {
+        // Hooks separados: getId() e isLimitAdTrackingEnabled() se hookean por
+        // separado porque en TikTok 47.0.3 la clase EXISTE y getId() también,
+        // pero R8 renombró/eliminó isLimitAdTrackingEnabled() — juntos en un
+        // solo try, el fallo del segundo tiraba abajo el hook del primero
+        // (confirmado en dispositivo: el log solo mostraba el segundo método).
+        boolean any = false;
         try {
             XposedHelpers.findAndHookMethod(INFO_CLASS, classLoader, "getId", new XC_MethodHook() {
                 @Override
@@ -25,19 +31,27 @@ public class AdsIdBlocker {
                     param.setResult(ZERO_UUID);
                 }
             });
+            ModuleLog.line("(TikRatu | AdsIdBlocker): hooked AdvertisingIdClient.Info.getId() -> UUID cero");
+            any = true;
+        } catch (Throwable t) {
+            ModuleLog.line("(TikRatu | AdsIdBlocker): getId() no hookeable (" + t.getMessage() + ")");
+        }
 
+        try {
             XposedHelpers.findAndHookMethod(INFO_CLASS, classLoader, "isLimitAdTrackingEnabled", new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) {
                     param.setResult(true);
                 }
             });
-
-            ModuleLog.line("(TikRatu | AdsIdBlocker): hooked AdvertisingIdClient.Info (getId/isLimitAdTrackingEnabled)");
+            ModuleLog.line("(TikRatu | AdsIdBlocker): hooked isLimitAdTrackingEnabled() -> true");
+            any = true;
         } catch (Throwable t) {
-            // Normal si TikTok no linkea esta libreria en esta version/build, o si
-            // Play Services no esta disponible en el dispositivo.
-            ModuleLog.line("(TikRatu | AdsIdBlocker): clase no encontrada, nada que hookear (" + t.getMessage() + ")");
+            ModuleLog.line("(TikRatu | AdsIdBlocker): isLimitAdTrackingEnabled() no existe en este build (normal)");
+        }
+
+        if (!any) {
+            ModuleLog.line("(TikRatu | AdsIdBlocker): ningun metodo de AdvertisingIdClient.Info se pudo hookear");
         }
     }
 }
