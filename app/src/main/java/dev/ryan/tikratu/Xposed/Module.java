@@ -41,8 +41,16 @@ public class Module implements IXposedHookLoadPackage, IXposedHookZygoteInit {
     @Override
     public void initZygote(StartupParam startupParam) {
         String apkDir = new File(startupParam.modulePath).getParent();
-        String abi = android.os.Build.SUPPORTED_ABIS[0];
-        moduleNativeLibDir = apkDir + "/lib/" + abi;
+        // No asumir que la carpeta se llama igual que Build.SUPPORTED_ABIS[0]
+        // ("arm64-v8a"): verificado en dispositivo real (LineageOS, KernelSU Next)
+        // que PackageManager extrae las libs nativas bajo un nombre ABREVIADO
+        // (lib/arm64/, no lib/arm64-v8a/). Se lista el directorio real en vez
+        // de adivinar el nombre.
+        File libDir = new File(apkDir, "lib");
+        File[] abiDirs = libDir.listFiles(File::isDirectory);
+        if (abiDirs != null && abiDirs.length > 0) {
+            moduleNativeLibDir = abiDirs[0].getAbsolutePath();
+        }
     }
 
     @Override
