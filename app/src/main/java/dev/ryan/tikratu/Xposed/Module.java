@@ -67,7 +67,7 @@ public class Module implements IXposedHookLoadPackage, IXposedHookZygoteInit {
 
         ModuleLog.line("(TikRatu): cargando en " + lpparam.packageName + " (proceso " + lpparam.processName + ")");
 
-        ModulePrefsReader prefs = new ModulePrefsReader(ModulePackage.NAME);
+        ModulePrefsReader prefs = new ModulePrefsReader();
 
         if (prefs.getBoolean(Prefs.KEY_ADS_ID_BLOCKER, Prefs.DEFAULT_ADS_ID_BLOCKER)) {
             new AdsIdBlocker().block(lpparam.classLoader);
