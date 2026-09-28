@@ -75,12 +75,12 @@ Columna "Estado real" = confirmado con logs de un dispositivo real (Android 16 /
 | Feature | Estado real (dispositivo) |
 |---|---|
 | Quitar anuncios del feed (`AdBlocker`) | 🟢 Hook carga (`Aweme.isAd()` directo + DexKit) |
-| Bloquear Advertising ID / GAID (`AdsIdBlocker`) | 🟡 No-op en este device (LineageOS sin Play Services) — sin verificar en un device con Play Services |
+| Bloquear Advertising ID / GAID (`AdsIdBlocker`) | 🟢 **Arreglado (2026-09-28)** — `getId()` anula el GAID (UUID cero). La clase SÍ estaba en el APK; el bug era que `isLimitAdTrackingEnabled()` (renombrado por R8) tumbaba el hook de `getId()` al compartir try/catch. Separados |
 | Ocultar el App ID de AdMob (`AdsMetadataBlocker`) | 🟢 Hook carga (`getApplicationInfo`, 2 métodos) — antes fallaba con `Bundle.getString`, ver fix abajo. Efecto real pendiente de un device con Play Services |
 | Bloquear ubicación (`LocationBlocker`) | 🟢 Hook carga |
 | Quitar anuncios encubiertos (`AdSignalsBlocker`) | 🟢 Hooks cargan (isSoftAd/isPseudoAd/isSearchPreciseAd) |
 | Limpiar links copiados (`UrlSanitizerBlocker`) | 🟢 Hook carga (`ClipboardManager.setPrimaryClip`) |
-| Marca de agua en video (`WatermarkBlocker`) | 🟡 **Primer resultado positivo** con `getTranscode()=1` (SexAlloy): video descargado sin marca flotante en 4 frames. Pendiente confirmar con video de creador simple |
+| Marca de agua en video (`WatermarkBlocker`) | 🟢 **RESUELTA y confirmada (2026-09-28)** con `getTranscode()=1` (técnica de SexAlloy) — video de creador simple (@Holdrich) descargado sin la marca flotante "TikTok @usuario" en 4 frames (`docs/evidencia/watermark_resuelto_transcode_2026-09-28.png`). Es el fix que faltó toda la sesión; los swaps de URL no servían |
 | Marca de agua en foto (`PhotoWatermarkBlocker`) | 🟢 Hook carga — no probado con un post de foto real |
 | Forzar descarga habilitada (`DownloadUnlockBlocker`) | 🟢 Hook carga (`isPreventDownload`) |
 | Filtro de feed (`FeedFilterBlocker`) | 🟢 **Probado**: "Quitar directos" → `2 de 9 items filtrados`. Cubre directos/historias/Tienda/fotos/largos/vistas/likes/palabras |
