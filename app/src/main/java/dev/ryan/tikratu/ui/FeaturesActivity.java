@@ -124,6 +124,9 @@ public class FeaturesActivity extends Activity {
         list.add(FeatureItem.toggle(
                 getString(R.string.feature_hide_image_title), getString(R.string.feature_hide_image_desc),
                 Prefs.KEY_HIDE_IMAGE, Prefs.DEFAULT_HIDE_IMAGE));
+        list.add(FeatureItem.toggle(
+                getString(R.string.feature_hide_music_title), getString(R.string.feature_hide_music_desc),
+                Prefs.KEY_HIDE_PROMOTED_MUSIC, Prefs.DEFAULT_HIDE_PROMOTED_MUSIC));
         list.add(numberAction(R.string.feature_max_duration_title, Prefs.KEY_MAX_DURATION_SEC, Prefs.DEFAULT_MAX_DURATION_SEC));
         list.add(numberAction(R.string.feature_min_views_title, Prefs.KEY_MIN_VIEWS, Prefs.DEFAULT_MIN_VIEWS));
         list.add(numberAction(R.string.feature_min_likes_title, Prefs.KEY_MIN_LIKES, Prefs.DEFAULT_MIN_LIKES));
@@ -134,6 +137,9 @@ public class FeaturesActivity extends Activity {
         list.add(FeatureItem.toggle(
                 getString(R.string.feature_screen_capture_title), getString(R.string.feature_screen_capture_desc),
                 Prefs.KEY_SCREEN_CAPTURE_BLOCKER, Prefs.DEFAULT_SCREEN_CAPTURE_BLOCKER));
+        list.add(FeatureItem.toggle(
+                getString(R.string.feature_disable_login_title), getString(R.string.feature_disable_login_desc),
+                Prefs.KEY_DISABLE_LOGIN, Prefs.DEFAULT_DISABLE_LOGIN));
 
         list.add(FeatureItem.header(getString(R.string.section_ui)));
         list.add(FeatureItem.toggle(

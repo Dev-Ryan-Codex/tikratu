@@ -33,6 +33,8 @@
     <string name="feature_hide_shop_desc">No mostrar videos de TikTok Shop en el feed</string>
     <string name="feature_hide_image_title">Eliminar presentación</string>
     <string name="feature_hide_image_desc">No mostrar posts de fotos/diapositivas en el feed</string>
+    <string name="feature_hide_music_title">Ocultar música promocionada</string>
+    <string name="feature_hide_music_desc">No mostrar videos con música promocionada (Aweme.isWithPromotionalMusic)</string>
     <string name="feature_max_duration_title">Ocultar publicaciones largas (segundos)</string>
     <string name="feature_min_views_title">Mínimo de vistas</string>
     <string name="feature_min_likes_title">Mínimo de me gusta</string>
@@ -47,6 +49,8 @@
     <string name="feature_stop_loop_desc">El video se detiene al terminar en vez de repetirse (TTVideoEngine.setLooping)</string>
     <string name="feature_screen_capture_title">No detectar capturas de pantalla</string>
     <string name="feature_screen_capture_desc">TikTok no reacciona a screenshots ni grabaciones de pantalla</string>
+    <string name="feature_disable_login_title">Quitar login obligatorio</string>
+    <string name="feature_disable_login_desc">El feed queda usable sin iniciar sesión (MandatoryLoginService)</string>
 
     <string name="section_ui">Interfaz</string>
     <string name="feature_font_style_title">Fuente del sistema</string>

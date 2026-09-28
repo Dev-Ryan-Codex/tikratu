@@ -14,6 +14,7 @@ import dev.ryan.tikratu.mods.ads.AdSignalsBlocker;
 import dev.ryan.tikratu.mods.feed.FeedFilterBlocker;
 import dev.ryan.tikratu.mods.interaction.StopVideoLoopingBlocker;
 import dev.ryan.tikratu.mods.interaction.ScreenCaptureBlocker;
+import dev.ryan.tikratu.mods.interaction.DisableLoginBlocker;
 import dev.ryan.tikratu.mods.tracking.AdsIdBlocker;
 import dev.ryan.tikratu.mods.tracking.AdsMetadataBlocker;
 import dev.ryan.tikratu.mods.tracking.LocationBlocker;
@@ -122,6 +123,7 @@ public class Module implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                 prefs.getBoolean(Prefs.KEY_HIDE_STORY, Prefs.DEFAULT_HIDE_STORY),
                 prefs.getBoolean(Prefs.KEY_HIDE_SHOP, Prefs.DEFAULT_HIDE_SHOP),
                 prefs.getBoolean(Prefs.KEY_HIDE_IMAGE, Prefs.DEFAULT_HIDE_IMAGE),
+                prefs.getBoolean(Prefs.KEY_HIDE_PROMOTED_MUSIC, Prefs.DEFAULT_HIDE_PROMOTED_MUSIC),
                 prefs.getLong(Prefs.KEY_MAX_DURATION_SEC, Prefs.DEFAULT_MAX_DURATION_SEC),
                 prefs.getLong(Prefs.KEY_MIN_VIEWS, Prefs.DEFAULT_MIN_VIEWS),
                 prefs.getLong(Prefs.KEY_MIN_LIKES, Prefs.DEFAULT_MIN_LIKES),
@@ -134,6 +136,9 @@ public class Module implements IXposedHookLoadPackage, IXposedHookZygoteInit {
         }
         if (prefs.getBoolean(Prefs.KEY_SCREEN_CAPTURE_BLOCKER, Prefs.DEFAULT_SCREEN_CAPTURE_BLOCKER)) {
             new ScreenCaptureBlocker().block(lpparam.classLoader);
+        }
+        if (prefs.getBoolean(Prefs.KEY_DISABLE_LOGIN, Prefs.DEFAULT_DISABLE_LOGIN)) {
+            new DisableLoginBlocker().block(lpparam.classLoader);
         }
 
         if (prefs.getBoolean(Prefs.KEY_AD_BLOCKER, Prefs.DEFAULT_AD_BLOCKER)) {

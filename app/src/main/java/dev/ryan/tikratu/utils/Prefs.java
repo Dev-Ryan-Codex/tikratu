@@ -55,6 +55,9 @@ public final class Prefs {
     public static final String KEY_HIDE_IMAGE = "pref_feed_hide_image";
     public static final boolean DEFAULT_HIDE_IMAGE = false;
 
+    public static final String KEY_HIDE_PROMOTED_MUSIC = "pref_feed_hide_promoted_music";
+    public static final boolean DEFAULT_HIDE_PROMOTED_MUSIC = false;
+
     /** Segundos; 0 = desactivado. */
     public static final String KEY_MAX_DURATION_SEC = "pref_feed_max_duration_sec";
     public static final long DEFAULT_MAX_DURATION_SEC = 0;
@@ -76,6 +79,9 @@ public final class Prefs {
 
     public static final String KEY_SCREEN_CAPTURE_BLOCKER = "pref_screen_capture_blocker";
     public static final boolean DEFAULT_SCREEN_CAPTURE_BLOCKER = false;
+
+    public static final String KEY_DISABLE_LOGIN = "pref_disable_login";
+    public static final boolean DEFAULT_DISABLE_LOGIN = false;
 
     public static final String KEY_STREAK_ENABLED = "pref_streak_enabled";
     public static final boolean DEFAULT_STREAK_ENABLED = false;

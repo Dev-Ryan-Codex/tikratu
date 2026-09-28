@@ -51,17 +51,20 @@ public class FeedFilterBlocker {
     private final boolean hideStory;
     private final boolean hideShop;
     private final boolean hideImage;
+    private final boolean hidePromotedMusic;
     private final long maxDurationSec;
     private final long minViews;
     private final long minLikes;
     private final List<String> blockWords = new ArrayList<>();
 
     public FeedFilterBlocker(boolean hideLive, boolean hideStory, boolean hideShop, boolean hideImage,
-                             long maxDurationSec, long minViews, long minLikes, String captionBlocklist) {
+                             boolean hidePromotedMusic, long maxDurationSec, long minViews, long minLikes,
+                             String captionBlocklist) {
         this.hideLive = hideLive;
         this.hideStory = hideStory;
         this.hideShop = hideShop;
         this.hideImage = hideImage;
+        this.hidePromotedMusic = hidePromotedMusic;
         this.maxDurationSec = maxDurationSec;
         this.minViews = minViews;
         this.minLikes = minLikes;
@@ -74,7 +77,7 @@ public class FeedFilterBlocker {
     }
 
     public boolean isActive() {
-        return hideLive || hideStory || hideShop || hideImage
+        return hideLive || hideStory || hideShop || hideImage || hidePromotedMusic
                 || maxDurationSec > 0 || minViews > 0 || minLikes > 0 || !blockWords.isEmpty();
     }
 
@@ -154,6 +157,7 @@ public class FeedFilterBlocker {
         if (hideStory && bool(aweme, "getIsTikTokStory")) return true;
         if (hideShop && isShop(aweme)) return true;
         if (hideImage && isImage(aweme)) return true;
+        if (hidePromotedMusic && bool(aweme, "isWithPromotionalMusic")) return true;
         if (maxDurationSec > 0 && isLongerThan(aweme, maxDurationSec)) return true;
         if (minViews > 0 || minLikes > 0) {
             Object stats = call(aweme, "getStatistics");
