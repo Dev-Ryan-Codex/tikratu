@@ -26,6 +26,18 @@ Punto de hook tomado del parche "Feed filter" de [icysymmetra/tiktok-patches-for
 
 Confirmado en dispositivo con "Quitar directos" activo: `FeedFilterBlocker: 2 de 9 items filtrados`.
 
+## Importación desde ReVanced/SexAlloy (2026-09-28)
+
+A partir de [mentalblank/Tiktok-Revanced](https://github.com/mentalblank/Tiktok-Revanced) (parches [icysymmetra/Morphe](https://github.com/icysymmetra/tiktok-patches-for-morphe) + módulo Xposed [gnadgnaoh/SexAlloy](https://github.com/gnadgnaoh/SexAlloy)) se importaron puntos de hook verificados en 47.0.3:
+
+- **Filtro de feed** (`FeedFilterBlocker`) — de Morphe. Probado en dispositivo.
+- **Dejar de reproducir en bucle** (`StopVideoLoopingBlocker`) — `TTVideoEngine.setLooping`. Hook confirmado cargando.
+- **Marca de agua vía transcode** (`WatermarkBlocker`) — de SexAlloy: `ACLCommonShare.getTranscode() → 1`. **Primer resultado positivo del watermark en toda la sesión**: un video descargado con esto activo no mostró la marca flotante "TikTok @usuario" en 4 frames espaciados (10s/22s/34s/46s), a diferencia de todos los swaps de URL probados antes. Pendiente de confirmar con un video de creador simple (el probado tenía muchos overlays propios).
+- **No detectar capturas de pantalla** (`ScreenCaptureBlocker`) — de SexAlloy: neutraliza `Activity.registerScreenCaptureCallback` (API 34+). Hook confirmado cargando.
+- **Estilo de fuente** (`FontStyleBlocker`) — `Typeface.createFromAsset`. Confirmado visualmente en dispositivo.
+
+Identificados pero no importados (frágiles o requieren parcheo de bytecode, no traducibles a hook de runtime puro): Hide CAPTCHA (SexAlloy lo deja off por defecto por colgar logins), Always Show Publish Date (5 gates en `VideoAuthorInfoVM`), Remove Tako AI, Disable login requirement, Fix Google login.
+
 ## Catálogo completo del plugin de referencia (capturas 2026-09-27)
 
 Del "TikTok Plugin" de las capturas (`C:\Audit\equipos\tiktok apk\img tiktok plugin`), catalogado íntegro y clasificado:

@@ -54,7 +54,7 @@
 
     <string name="section_media">Media</string>
     <string name="feature_watermark_title">Video sin marca de agua</string>
-    <string name="feature_watermark_desc">Probado con tikwm.com (terceros) y swap de campo propio: ninguno funciona hoy, el archivo sigue con marca — ver README</string>
+    <string name="feature_watermark_desc">Fuerza ACLCommonShare.getTranscode()=1 (técnica de SexAlloy) + swaps de campo de respaldo — resultado inicial sin marca, ver README</string>
     <string name="feature_photo_watermark_title">Fotos sin marca de agua</string>
     <string name="feature_photo_watermark_desc">Mismo mecanismo que el de video — no probado todavía en un post de foto real</string>
     <string name="feature_download_unlock_title">Forzar descarga habilitada</string>
