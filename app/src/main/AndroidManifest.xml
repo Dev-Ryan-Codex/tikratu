@@ -27,11 +27,6 @@
             </intent-filter>
         </activity>
 
-        <activity
-            android:name=".ui.FeaturesActivity"
-            android:exported="false"
-            android:label="@string/features" />
-
         <!-- exported=true a proposito: TikTok (proceso ajeno, corre nuestro codigo
              inyectado via LSPosed) necesita consultar esto por Binder IPC — ver
              PrefsProvider.java para el porque (aislamiento de namespace de montaje

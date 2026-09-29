@@ -9,6 +9,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.materialswitch.MaterialSwitch;
 
 import java.util.List;
@@ -21,6 +22,7 @@ public class FeatureAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     private static final int TYPE_HEADER = 0;
     private static final int TYPE_SWITCH = 1;
     private static final int TYPE_ACTION = 2;
+    private static final int TYPE_STATUS = 3;
 
     private final List<FeatureItem> items;
     private final Context context;
@@ -35,6 +37,7 @@ public class FeatureAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         switch (items.get(position).type) {
             case HEADER: return TYPE_HEADER;
             case ACTION: return TYPE_ACTION;
+            case STATUS: return TYPE_STATUS;
             default: return TYPE_SWITCH;
         }
     }
@@ -46,6 +49,9 @@ public class FeatureAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         if (viewType == TYPE_HEADER) {
             return new HeaderHolder(inflater.inflate(R.layout.item_feature_header, parent, false));
         }
+        if (viewType == TYPE_STATUS) {
+            return new StatusHolder(inflater.inflate(R.layout.item_status, parent, false));
+        }
         return new RowHolder(inflater.inflate(R.layout.item_feature, parent, false));
     }
 
@@ -54,6 +60,15 @@ public class FeatureAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         FeatureItem item = items.get(position);
         if (holder instanceof HeaderHolder) {
             ((HeaderHolder) holder).title.setText(item.title);
+            return;
+        }
+        if (holder instanceof StatusHolder) {
+            StatusHolder s = (StatusHolder) holder;
+            s.module.setText(item.statusModule);
+            s.version.setText(item.statusVersion);
+            s.openButton.setOnClickListener(v -> {
+                if (item.onClick != null) item.onClick.onClick();
+            });
             return;
         }
 
@@ -97,6 +112,18 @@ public class FeatureAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         HeaderHolder(View itemView) {
             super(itemView);
             title = itemView.findViewById(R.id.tv_header);
+        }
+    }
+
+    static class StatusHolder extends RecyclerView.ViewHolder {
+        final TextView module;
+        final TextView version;
+        final MaterialButton openButton;
+        StatusHolder(View itemView) {
+            super(itemView);
+            module = itemView.findViewById(R.id.status_module);
+            version = itemView.findViewById(R.id.status_version);
+            openButton = itemView.findViewById(R.id.btn_open_tiktok);
         }
     }
 
