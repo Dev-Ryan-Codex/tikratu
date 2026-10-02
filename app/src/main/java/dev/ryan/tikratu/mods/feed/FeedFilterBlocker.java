@@ -63,7 +63,14 @@ public class FeedFilterBlocker {
                 || RuntimeSettings.getLong(Prefs.KEY_MAX_DURATION_SEC, Prefs.DEFAULT_MAX_DURATION_SEC) > 0
                 || RuntimeSettings.getLong(Prefs.KEY_MIN_VIEWS, Prefs.DEFAULT_MIN_VIEWS) > 0
                 || RuntimeSettings.getLong(Prefs.KEY_MIN_LIKES, Prefs.DEFAULT_MIN_LIKES) > 0
-                || !RuntimeSettings.getString(Prefs.KEY_CAPTION_BLOCKLIST, Prefs.DEFAULT_CAPTION_BLOCKLIST).trim().isEmpty();
+                || !RuntimeSettings.getString(Prefs.KEY_CAPTION_BLOCKLIST, Prefs.DEFAULT_CAPTION_BLOCKLIST).trim().isEmpty()
+                || forceRegionActive();
+    }
+
+    /** "Forzar modo de región": activo sólo si el toggle está on Y hay un país elegido. */
+    private static boolean forceRegionActive() {
+        return RuntimeSettings.enabled(Prefs.KEY_FORCE_REGION, Prefs.DEFAULT_FORCE_REGION)
+                && !RuntimeSettings.getString(Prefs.KEY_REGION_CODE, Prefs.DEFAULT_REGION_CODE).trim().isEmpty();
     }
 
     public void block(ClassLoader classLoader) {
@@ -155,6 +162,19 @@ public class FeedFilterBlocker {
             if (stats != null) {
                 if (minViews > 0 && num(stats, "getPlayCount") < minViews) return true;
                 if (minLikes > 0 && num(stats, "getDiggCount") < minLikes) return true;
+            }
+        }
+
+        // Forzar modo de región: ocultar posts cuya región (Aweme.getRegion(),
+        // campo JSON "region", ISO alpha-2 mayúsculas) difiera de la elegida.
+        // Si el post no trae región (vacío/null) se CONSERVA, para no vaciar el
+        // feed por completo con contenido sin geo-tag.
+        if (forceRegionActive()) {
+            String want = RuntimeSettings.getString(Prefs.KEY_REGION_CODE, Prefs.DEFAULT_REGION_CODE).trim();
+            Object region = call(aweme, "getRegion");
+            if (region instanceof String) {
+                String have = ((String) region).trim();
+                if (!have.isEmpty() && !have.equalsIgnoreCase(want)) return true;
             }
         }
 

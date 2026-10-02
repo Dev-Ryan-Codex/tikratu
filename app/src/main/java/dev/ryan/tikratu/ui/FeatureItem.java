@@ -55,6 +55,10 @@ public class FeatureItem {
         return new FeatureItem(Type.ACTION, title, null, null, false, null, value, onClick);
     }
 
+    public static FeatureItem action(String title, String description, String value, OnClick onClick) {
+        return new FeatureItem(Type.ACTION, title, description, null, false, null, value, onClick);
+    }
+
     /** Tarjeta de estado del módulo + botón "Abrir TikTok", como primer item del tab Inicio. */
     public static FeatureItem status(String statusModule, String statusVersion, OnClick onOpenTikTok) {
         FeatureItem item = new FeatureItem(Type.STATUS, null, null, null, false, null, null, onOpenTikTok);

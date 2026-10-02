@@ -28,7 +28,7 @@ public class StreakReminderReceiver extends BroadcastReceiver {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
-                    CHANNEL_ID, "Recordatorio de streak", NotificationManager.IMPORTANCE_DEFAULT);
+                    CHANNEL_ID, "Renovación de racha", NotificationManager.IMPORTANCE_DEFAULT);
             manager.createNotificationChannel(channel);
         }
 
@@ -48,8 +48,8 @@ public class StreakReminderReceiver extends BroadcastReceiver {
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.ic_dialog_info)
-                .setContentTitle("TikRatu")
-                .setContentText("No te olvides de mandar tu streak hoy")
+                .setContentTitle("TikRatu — Racha")
+                .setContentText("Renová tu racha de TikTok hoy 🔥")
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setAutoCancel(true);
 

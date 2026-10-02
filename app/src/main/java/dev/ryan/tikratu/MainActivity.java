@@ -49,6 +49,8 @@ public class MainActivity extends AppCompatActivity {
     private FeatureItem statusItem;
     private FeatureItem timeItem;
     private int timeItemPosition;
+    private FeatureItem fontItem;
+    private FeatureItem regionItem;
 
     private View recyclerFeatures;
     private View settingsContainer;
@@ -189,9 +191,17 @@ public class MainActivity extends AppCompatActivity {
         list.add(FeatureItem.toggle(
                 getString(R.string.feature_disable_login_title), getString(R.string.feature_disable_login_desc),
                 Prefs.KEY_DISABLE_LOGIN, Prefs.DEFAULT_DISABLE_LOGIN));
+        fontItem = FeatureItem.action(getString(R.string.feature_font_style_title),
+                getString(R.string.feature_font_style_desc), currentFontLabel(), this::showFontPicker);
+        list.add(fontItem);
+
+        list.add(FeatureItem.header(getString(R.string.section_region)));
+        regionItem = FeatureItem.action(getString(R.string.feature_region_title),
+                getString(R.string.feature_region_desc), currentRegionLabel(), this::showRegionPicker);
+        list.add(regionItem);
         list.add(FeatureItem.toggle(
-                getString(R.string.feature_font_style_title), getString(R.string.feature_font_style_desc),
-                Prefs.KEY_FONT_STYLE_BLOCKER, Prefs.DEFAULT_FONT_STYLE_BLOCKER));
+                getString(R.string.feature_force_region_title), getString(R.string.feature_force_region_desc),
+                Prefs.KEY_FORCE_REGION, Prefs.DEFAULT_FORCE_REGION));
 
         list.add(FeatureItem.header(getString(R.string.section_streak)));
         list.add(FeatureItem.toggle(
@@ -202,6 +212,7 @@ public class MainActivity extends AppCompatActivity {
         int hour = StreakReminderScheduler.getHour(this);
         int minute = StreakReminderScheduler.getMinute(this);
         timeItem = FeatureItem.action(getString(R.string.feature_streak_time_title),
+                getString(R.string.feature_streak_time_desc),
                 String.format("%02d:%02d", hour, minute), this::showTimePicker);
         list.add(timeItem);
         timeItemPosition = list.size() - 1;
@@ -288,6 +299,105 @@ public class MainActivity extends AppCompatActivity {
                 .setMessage(R.string.feed_filter_note)
                 .setView(container)
                 .setPositiveButton(R.string.dialog_ok, (d, w) -> onInput.onInput(input.getText().toString()))
+                .setNegativeButton(R.string.dialog_cancel, null)
+                .show();
+    }
+
+    /**
+     * Etiqueta mostrada en la fila de fuente: refleja si está activo el
+     * reemplazo y cuál se eligió. Si el master toggle está apagado, muestra la
+     * predeterminada de TikTok.
+     */
+    private String currentFontLabel() {
+        boolean enabled = AppPrefs.getBoolean(this, Prefs.KEY_FONT_STYLE_BLOCKER, Prefs.DEFAULT_FONT_STYLE_BLOCKER);
+        if (!enabled) return getString(R.string.font_row_default);
+        String choice = AppPrefs.getString(this, Prefs.KEY_FONT_CHOICE, Prefs.DEFAULT_FONT_CHOICE);
+        switch (choice) {
+            case Prefs.FONT_SERIF: return getString(R.string.font_row_serif);
+            case Prefs.FONT_MONOSPACE: return getString(R.string.font_row_monospace);
+            case Prefs.FONT_IOS: return getString(R.string.font_row_ios);
+            case Prefs.FONT_HYPEROS: return getString(R.string.font_row_hyperos);
+            case Prefs.FONT_SYSTEM:
+            default: return getString(R.string.font_row_system);
+        }
+    }
+
+    private void showFontPicker() {
+        // Orden fijo: índice 0 = predeterminada (desactiva el reemplazo).
+        final String[] choiceKeys = {"default", Prefs.FONT_SYSTEM, Prefs.FONT_SERIF, Prefs.FONT_MONOSPACE, Prefs.FONT_IOS, Prefs.FONT_HYPEROS};
+        String[] labels = {
+                getString(R.string.font_choice_default),
+                getString(R.string.font_choice_system),
+                getString(R.string.font_choice_serif),
+                getString(R.string.font_choice_monospace),
+                getString(R.string.font_choice_ios),
+                getString(R.string.font_choice_hyperos),
+        };
+
+        boolean enabled = AppPrefs.getBoolean(this, Prefs.KEY_FONT_STYLE_BLOCKER, Prefs.DEFAULT_FONT_STYLE_BLOCKER);
+        String current = enabled ? AppPrefs.getString(this, Prefs.KEY_FONT_CHOICE, Prefs.DEFAULT_FONT_CHOICE) : "default";
+        int checked = 0;
+        for (int i = 0; i < choiceKeys.length; i++) {
+            if (choiceKeys[i].equals(current)) { checked = i; break; }
+        }
+
+        // OJO: setMessage + setSingleChoiceItems se pisan (el mensaje ocupa el
+        // área de contenido y la lista no se dibuja). Por eso la aclaración de
+        // Inter va en la etiqueta de la opción iOS, no como mensaje.
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.feature_font_style_title)
+                .setSingleChoiceItems(labels, checked, (dialog, which) -> {
+                    if ("default".equals(choiceKeys[which])) {
+                        AppPrefs.putBoolean(this, Prefs.KEY_FONT_STYLE_BLOCKER, false);
+                    } else {
+                        AppPrefs.putBoolean(this, Prefs.KEY_FONT_STYLE_BLOCKER, true);
+                        AppPrefs.putString(this, Prefs.KEY_FONT_CHOICE, choiceKeys[which]);
+                    }
+                    fontItem.value = currentFontLabel();
+                    adapter.notifyItemChanged(items.indexOf(fontItem));
+                    dialog.dismiss();
+                })
+                .setNegativeButton(R.string.dialog_cancel, null)
+                .show();
+    }
+
+    /** Etiqueta de la fila Región: nombre del país elegido o "Región del dispositivo". */
+    private String currentRegionLabel() {
+        String code = AppPrefs.getString(this, Prefs.KEY_REGION_CODE, Prefs.DEFAULT_REGION_CODE);
+        if (code == null || code.trim().isEmpty()) return getString(R.string.region_none);
+        String[] codes = getResources().getStringArray(R.array.region_codes);
+        String[] names = getResources().getStringArray(R.array.region_names);
+        for (int i = 0; i < codes.length && i < names.length; i++) {
+            if (codes[i].equalsIgnoreCase(code)) return names[i];
+        }
+        return code.toUpperCase();
+    }
+
+    private void showRegionPicker() {
+        String[] codes = getResources().getStringArray(R.array.region_codes);
+        String[] names = getResources().getStringArray(R.array.region_names);
+        // Opción 0 = región del dispositivo (desactiva el override).
+        final String[] labels = new String[names.length + 1];
+        labels[0] = getString(R.string.region_none);
+        System.arraycopy(names, 0, labels, 1, names.length);
+
+        String current = AppPrefs.getString(this, Prefs.KEY_REGION_CODE, Prefs.DEFAULT_REGION_CODE);
+        int checked = 0;
+        if (current != null && !current.trim().isEmpty()) {
+            for (int i = 0; i < codes.length; i++) {
+                if (codes[i].equalsIgnoreCase(current)) { checked = i + 1; break; }
+            }
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.region_dialog_title)
+                .setSingleChoiceItems(labels, checked, (dialog, which) -> {
+                    String code = which == 0 ? "" : codes[which - 1];
+                    AppPrefs.putString(this, Prefs.KEY_REGION_CODE, code);
+                    regionItem.value = currentRegionLabel();
+                    adapter.notifyItemChanged(items.indexOf(regionItem));
+                    dialog.dismiss();
+                })
                 .setNegativeButton(R.string.dialog_cancel, null)
                 .show();
     }

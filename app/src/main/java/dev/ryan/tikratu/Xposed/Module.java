@@ -22,6 +22,7 @@ import dev.ryan.tikratu.mods.media.DownloadUnlockBlocker;
 import dev.ryan.tikratu.mods.media.PhotoWatermarkBlocker;
 import dev.ryan.tikratu.mods.media.UrlSanitizerBlocker;
 import dev.ryan.tikratu.mods.media.WatermarkBlocker;
+import dev.ryan.tikratu.mods.region.RegionBlocker;
 import dev.ryan.tikratu.mods.ui.FontStyleBlocker;
 import dev.ryan.tikratu.utils.ModulePackage;
 import dev.ryan.tikratu.utils.Prefs;
@@ -35,6 +36,13 @@ public class Module implements IXposedHookLoadPackage, IXposedHookZygoteInit {
     private static boolean dexkitNativeLoaded;
 
     /**
+     * Ruta absoluta al APK de este módulo en disco. La usa FontStyleBlocker
+     * para cargar la fuente embebida (assets/fonts/ios.ttf) desde dentro del
+     * proceso de TikTok vía un AssetManager que apunta a nuestro propio APK.
+     */
+    public static volatile String modulePath;
+
+    /**
      * Corre una sola vez, muy temprano, antes de que Zygote forkee ningun
      * proceso de app. startupParam.modulePath es la ruta absoluta al APK de
      * ESTE MISMO modulo en disco (dev.ryan.tikratu) — es la unica forma
@@ -45,6 +53,7 @@ public class Module implements IXposedHookLoadPackage, IXposedHookZygoteInit {
      */
     @Override
     public void initZygote(StartupParam startupParam) {
+        modulePath = startupParam.modulePath;
         String apkDir = new File(startupParam.modulePath).getParent();
         // No asumir que la carpeta se llama igual que Build.SUPPORTED_ABIS[0]
         // ("arm64-v8a"): verificado en dispositivo real (LineageOS, KernelSU Next)
@@ -110,6 +119,7 @@ public class Module implements IXposedHookLoadPackage, IXposedHookZygoteInit {
         new StopVideoLoopingBlocker().block(cl);
         new ScreenCaptureBlocker().block(cl);
         new DisableLoginBlocker().block(cl);
+        new RegionBlocker().block(cl);
     }
 
     private static synchronized void loadDexKitNativeLibrary() {

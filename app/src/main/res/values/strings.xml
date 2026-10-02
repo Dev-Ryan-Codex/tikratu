@@ -12,33 +12,33 @@
 
     <string name="section_ads">Anuncios y tracking</string>
     <string name="feature_ad_blocker_title">Quitar anuncios del feed</string>
-    <string name="feature_ad_blocker_desc">Aweme.isAd() siempre devuelve false</string>
+    <string name="feature_ad_blocker_desc">Oculta los videos patrocinados del feed.</string>
     <string name="feature_ads_id_title">Anular Advertising ID</string>
-    <string name="feature_ads_id_desc">AdvertisingIdClient.Info devuelve un UUID cero</string>
+    <string name="feature_ads_id_desc">TikTok recibe un ID de publicidad en ceros; no puede perfilarte.</string>
     <string name="feature_ads_metadata_title">Ocultar App ID de AdMob</string>
-    <string name="feature_ads_metadata_desc">El SDK de Google Mobile Ads no se inicializa</string>
+    <string name="feature_ads_metadata_desc">El SDK de anuncios de Google (AdMob) no arranca.</string>
     <string name="feature_location_title">Bloquear ubicación</string>
-    <string name="feature_location_desc">LocationManager siempre devuelve null en el proceso de TikTok</string>
+    <string name="feature_location_desc">TikTok no obtiene tu ubicación GPS.</string>
     <string name="feature_ad_signals_title">Quitar anuncios encubiertos</string>
-    <string name="feature_ad_signals_desc">Aweme.isSoftAd(), isPseudoAd() e isSearchPreciseAd() siempre devuelven false</string>
+    <string name="feature_ad_signals_desc">Quita la publicidad disfrazada de contenido normal.</string>
     <string name="feature_url_sanitizer_title">Limpiar links copiados</string>
-    <string name="feature_url_sanitizer_desc">Quita parámetros de tracking (utm_*, ttclid, etc.) al copiar un enlace de TikTok</string>
+    <string name="feature_url_sanitizer_desc">Borra los parámetros de rastreo al copiar un enlace.</string>
 
     <string name="section_feed">Feed</string>
     <string name="feature_hide_live_title">Quitar directos</string>
-    <string name="feature_hide_live_desc">No mostrar directos (LIVE) en el feed</string>
+    <string name="feature_hide_live_desc">Saca los directos (LIVE) del feed.</string>
     <string name="feature_hide_story_title">Quitar historias</string>
-    <string name="feature_hide_story_desc">No mostrar historias en el feed</string>
+    <string name="feature_hide_story_desc">Oculta las historias del feed.</string>
     <string name="feature_hide_shop_title">Ocultar videos de la Tienda</string>
-    <string name="feature_hide_shop_desc">No mostrar videos de TikTok Shop en el feed</string>
-    <string name="feature_hide_image_title">Eliminar presentación</string>
-    <string name="feature_hide_image_desc">No mostrar posts de fotos/diapositivas en el feed</string>
+    <string name="feature_hide_shop_desc">Quita los videos de TikTok Shop.</string>
+    <string name="feature_hide_image_title">Eliminar presentaciones de fotos</string>
+    <string name="feature_hide_image_desc">Oculta los posts de fotos y diapositivas.</string>
     <string name="feature_hide_music_title">Ocultar música promocionada</string>
-    <string name="feature_hide_music_desc">No mostrar videos con música promocionada (Aweme.isWithPromotionalMusic)</string>
-    <string name="feature_max_duration_title">Ocultar publicaciones largas (segundos)</string>
+    <string name="feature_hide_music_desc">Filtra los videos con música pagada.</string>
+    <string name="feature_max_duration_title">Ocultar publicaciones largas</string>
     <string name="feature_min_views_title">Mínimo de vistas</string>
     <string name="feature_min_likes_title">Mínimo de me gusta</string>
-    <string name="feature_blocklist_title">Lista de bloqueo de descripción</string>
+    <string name="feature_blocklist_title">Lista de bloqueo por descripción</string>
     <string name="feature_blocklist_hint">Palabras separadas por coma</string>
     <string name="value_disabled">Desactivado</string>
     <string name="feed_filter_note">Los filtros de feed pueden demorar la carga y, si filtran demasiado, causar el error \"No hay más resultados\".</string>
@@ -46,28 +46,50 @@
     <string name="dialog_cancel">Cancelar</string>
 
     <string name="feature_stop_loop_title">Dejar de reproducir en bucle</string>
-    <string name="feature_stop_loop_desc">El video se detiene al terminar en vez de repetirse (TTVideoEngine.setLooping)</string>
+    <string name="feature_stop_loop_desc">El video se detiene al terminar en lugar de repetirse solo, para que no te quedes pegado en el mismo clip (TTVideoEngine.setLooping).</string>
     <string name="feature_screen_capture_title">No detectar capturas de pantalla</string>
-    <string name="feature_screen_capture_desc">TikTok no reacciona a screenshots ni grabaciones de pantalla</string>
+    <string name="feature_screen_capture_desc">TikTok deja de enterarse de tus screenshots y grabaciones de pantalla, así no avisa al autor ni cambia de comportamiento.</string>
     <string name="feature_disable_login_title">Quitar login obligatorio</string>
-    <string name="feature_disable_login_desc">El feed queda usable sin iniciar sesión (MandatoryLoginService)</string>
+    <string name="feature_disable_login_desc">Permite navegar el feed sin iniciar sesión, saltando el muro que obliga a entrar con cuenta (MandatoryLoginService).</string>
 
     <string name="section_ui">Interfaz</string>
-    <string name="feature_font_style_title">Fuente del sistema</string>
-    <string name="feature_font_style_desc">Reemplaza TikTok Sans (font/TikTokSans-VF.otf) por la fuente sans-serif del sistema</string>
+    <string name="feature_font_style_title">Fuente de la app</string>
+    <string name="feature_font_style_desc">Cambia la tipografía de TikTok; incluye un estilo iOS iPhone.</string>
+    <string name="font_choice_default">Predeterminada (TikTok Sans)</string>
+    <string name="font_choice_system">Sistema (sans-serif)</string>
+    <string name="font_choice_serif">Serif</string>
+    <string name="font_choice_monospace">Monoespaciada</string>
+    <string name="font_choice_ios">iOS iPhone SemiBold (Inter ≈ San Francisco)</string>
+    <string name="font_choice_hyperos">Xiaomi HyperOS SemiBold (MiSans)</string>
+    <!-- Etiquetas cortas para la fila (el diálogo usa las largas de arriba). -->
+    <string name="font_row_default">TikTok Sans</string>
+    <string name="font_row_system">Sistema</string>
+    <string name="font_row_serif">Serif</string>
+    <string name="font_row_monospace">Monoespaciada</string>
+    <string name="font_row_ios">iOS SemiBold</string>
+    <string name="font_row_hyperos">HyperOS SemiBold</string>
+
+    <string name="section_region">Región</string>
+    <string name="feature_region_title">Región</string>
+    <string name="feature_region_desc">TikTok usa esta ubicación para cargar contenido. Algunas regiones están restringidas por TikTok.</string>
+    <string name="feature_force_region_title">Forzar modo de región</string>
+    <string name="feature_force_region_desc">Muestra solo contenido de la región elegida. Puede demorar el feed y dar el error \"No hay más resultados\".</string>
+    <string name="region_dialog_title">Elegí una región</string>
+    <string name="region_none">Región del dispositivo</string>
 
     <string name="section_media">Media</string>
     <string name="feature_watermark_title">Video sin marca de agua</string>
-    <string name="feature_watermark_desc">Fuerza ACLCommonShare.getTranscode()=1 (técnica de SexAlloy) + swaps de campo de respaldo — resultado inicial sin marca, ver README</string>
+    <string name="feature_watermark_desc">Descarga los videos sin el logo de TikTok ni el @usuario flotante, forzando la variante limpia del servidor (ACLCommonShare.getTranscode()=1).</string>
     <string name="feature_photo_watermark_title">Fotos sin marca de agua</string>
-    <string name="feature_photo_watermark_desc">Mismo mecanismo que el de video — no probado todavía en un post de foto real</string>
+    <string name="feature_photo_watermark_desc">Aplica el mismo mecanismo a los posts de fotos — aún sin probar en una publicación de foto real.</string>
     <string name="feature_download_unlock_title">Forzar descarga habilitada</string>
-    <string name="feature_download_unlock_desc">Aweme.isPreventDownload() siempre devuelve false</string>
+    <string name="feature_download_unlock_desc">Activa el botón de guardar en los videos donde el autor lo bloqueó (Aweme.isPreventDownload() → false).</string>
 
-    <string name="section_streak">Streak</string>
-    <string name="feature_streak_title">Recordatorio de streak</string>
-    <string name="feature_streak_desc">Notificación local, no manda nada por vos</string>
-    <string name="feature_streak_time_title">Hora del recordatorio</string>
+    <string name="section_streak">Racha</string>
+    <string name="feature_streak_title">Renovación automática de la racha</string>
+    <string name="feature_streak_desc">Activa los recordatorios automáticos para mantener la racha</string>
+    <string name="feature_streak_time_title">Hora de renovación automática</string>
+    <string name="feature_streak_time_desc">Te avisa a esta hora — es un recordatorio local, no manda mensajes por vos</string>
 
     <string name="nav_home">Inicio</string>
     <string name="nav_settings">Ajustes</string>

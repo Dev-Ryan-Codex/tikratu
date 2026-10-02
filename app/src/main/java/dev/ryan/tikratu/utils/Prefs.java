@@ -41,6 +41,22 @@ public final class Prefs {
     public static final String KEY_FONT_STYLE_BLOCKER = "pref_font_style_blocker_enabled";
     public static final boolean DEFAULT_FONT_STYLE_BLOCKER = false;
 
+    /**
+     * Fuente elegida cuando KEY_FONT_STYLE_BLOCKER está activo. Valores:
+     * "system" (sans-serif del sistema), "serif", "monospace", "ios"
+     * (Inter, la fuente abierta métricamente cercana a San Francisco de iOS —
+     * la San Francisco real es propietaria de Apple y no se puede redistribuir).
+     * Ver FontStyleBlocker.
+     */
+    public static final String KEY_FONT_CHOICE = "pref_font_choice";
+    public static final String DEFAULT_FONT_CHOICE = "system";
+    public static final String FONT_SYSTEM = "system";
+    public static final String FONT_SERIF = "serif";
+    public static final String FONT_MONOSPACE = "monospace";
+    public static final String FONT_IOS = "ios";
+    /** MiSans Semibold (fuente de Xiaomi HyperOS), assets/fonts/hyperos.ttf. */
+    public static final String FONT_HYPEROS = "hyperos";
+
     // Filtro de feed (FeedFilterBlocker). Todo apagado por defecto: cambian
     // que contenido se ve, no son fixes de privacidad/ads.
     public static final String KEY_HIDE_LIVE = "pref_feed_hide_live";
@@ -82,6 +98,17 @@ public final class Prefs {
 
     public static final String KEY_DISABLE_LOGIN = "pref_disable_login";
     public static final boolean DEFAULT_DISABLE_LOGIN = false;
+
+    // Región (RegionBlocker). Fuerza la región que TikTok reporta para cargar
+    // contenido. Verificado en el dex 47.0.3: RegionService.getRegion() es el
+    // getter sin ofuscar; los params de API son region/store_region/sys_region/
+    // carrier_region. Lista de 206 países en res/values/regions.xml (extraída
+    // del plugin). Código vacío = región del dispositivo (desactivado).
+    public static final String KEY_FORCE_REGION = "pref_force_region";
+    public static final boolean DEFAULT_FORCE_REGION = false;
+
+    public static final String KEY_REGION_CODE = "pref_region_code";
+    public static final String DEFAULT_REGION_CODE = "";
 
     public static final String KEY_STREAK_ENABLED = "pref_streak_enabled";
     public static final boolean DEFAULT_STREAK_ENABLED = false;
