@@ -16,6 +16,7 @@ import dev.ryan.tikratu.mods.interaction.GoogleLoginFixBlocker;
 import dev.ryan.tikratu.mods.interaction.PlaybackSpeedBlocker;
 import dev.ryan.tikratu.mods.interaction.ScreenCaptureBlocker;
 import dev.ryan.tikratu.mods.interaction.StopVideoLoopingBlocker;
+import dev.ryan.tikratu.mods.ui.PendantBlocker;
 import dev.ryan.tikratu.mods.ui.TakoAiBlocker;
 import dev.ryan.tikratu.mods.media.DownloadUnlockBlocker;
 import dev.ryan.tikratu.mods.media.PhotoWatermarkBlocker;
@@ -70,6 +71,7 @@ public class Module implements IXposedHookLoadPackage, IXposedHookZygoteInit {
         new UrlSanitizerBlocker().block(cl);
         new FontStyleBlocker().block(cl);
         new TakoAiBlocker().block(cl);
+        new PendantBlocker().block(cl);
         new FeedFilterBlocker().block(cl);
         new StopVideoLoopingBlocker().block(cl);
         new PlaybackSpeedBlocker().block(cl);

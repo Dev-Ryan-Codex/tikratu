@@ -3,7 +3,6 @@ package dev.ryan.tikratu.mods.ui;
 import android.view.View;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedHelpers;
-import dev.ryan.tikratu.Xposed.RuntimeSettings;
 import dev.ryan.tikratu.utils.Prefs;
 import dev.ryan.tikratu.utils.log.ModuleLog;
 
@@ -15,14 +14,11 @@ import dev.ryan.tikratu.utils.log.ModuleLog;
  * split_df_a_dex, extiende BaseCellSlotComponent y sobreescribe
  * onViewCreated(View), cuyo nombre es del framework y no se ofusca. Los
  * demas metodos (fq, gq, nq...) si estan ofuscados y cambian por version,
- * asi que no se tocan: en cambio se marca el contenedor y se fuerza GONE
- * en View.setVisibility, porque fq(boolean) lo vuelve a mostrar al cambiar
- * de video.
+ * asi que no se tocan: el contenedor se marca en HiddenViews, que fuerza GONE
+ * porque fq(boolean) lo vuelve a mostrar al cambiar de video.
  */
 public class TakoAiBlocker {
     private static final String TAKO_ASSEM = "com.ss.android.ugc.aweme.feed.assem.tikbot.TakoAssem";
-    // Clave de tag: debe ser un id "de aplicacion" (byte alto >= 2).
-    private static final int TAG_KEY = 0x7e0a0001;
 
     private static boolean loggedHide;
 
@@ -37,29 +33,17 @@ public class TakoAiBlocker {
                 protected void afterHookedMethod(XC_MethodHook.MethodHookParam param) {
                     try {
                         View container = (View) XposedHelpers.callMethod(param.thisObject, "getContainerView", new Object[0]);
-                        if (container == null) return;
-                        container.setTag(TAG_KEY, Boolean.TRUE);
-                        if (RuntimeSettings.enabled(Prefs.KEY_HIDE_TAKO_AI, false)) {
-                            container.setVisibility(View.GONE);
-                            if (!loggedHide) {
-                                loggedHide = true;
-                                ModuleLog.line("(TikRatu | TakoAiBlocker): boton de Tako oculto");
-                            }
+                        HiddenViews.hide(container, Prefs.KEY_HIDE_TAKO_AI);
+                        if (container != null && !loggedHide) {
+                            loggedHide = true;
+                            ModuleLog.line("(TikRatu | TakoAiBlocker): boton de Tako marcado");
                         }
                     } catch (Throwable t) {
                         ModuleLog.line("(TikRatu | TakoAiBlocker): fallo al marcar el contenedor (" + t.getMessage() + ")");
                     }
                 }
             }});
-            XposedHelpers.findAndHookMethod(View.class, "setVisibility", new Object[]{Integer.TYPE, new XC_MethodHook() {
-                protected void beforeHookedMethod(XC_MethodHook.MethodHookParam param) {
-                    if (((View) param.thisObject).getTag(TAG_KEY) != null
-                            && RuntimeSettings.enabled(Prefs.KEY_HIDE_TAKO_AI, false)) {
-                        param.args[0] = Integer.valueOf(View.GONE);
-                    }
-                }
-            }});
-            ModuleLog.line("(TikRatu | TakoAiBlocker): hooked TakoAssem.onViewCreated + View.setVisibility");
+            ModuleLog.line("(TikRatu | TakoAiBlocker): hooked TakoAssem.onViewCreated");
         } catch (Throwable t) {
             ModuleLog.line("(TikRatu | TakoAiBlocker): fallo el hook (" + t.getMessage() + ")");
         }

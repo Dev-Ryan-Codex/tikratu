@@ -54,6 +54,7 @@ public final class Prefs {
     public static final String KEY_HIDE_LIVE = "pref_feed_hide_live";
     public static final String KEY_HIDE_PROMOTED_MUSIC = "pref_feed_hide_promoted_music";
     public static final String KEY_HIDE_TAKO_AI = "pref_hide_tako_ai";
+    public static final String KEY_HIDE_PENDANT = "pref_hide_pendant";
     public static final String KEY_HIDE_SHOP = "pref_feed_hide_shop";
     public static final String KEY_HIDE_STORY = "pref_feed_hide_story";
     public static final String KEY_LOCATION_BLOCKER = "pref_location_blocker_enabled";
