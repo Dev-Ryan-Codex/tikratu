@@ -1,9 +1,9 @@
 package dev.ryan.tikratu.utils;
 
-/** Nombre de paquete de esta app, usado para ubicar el archivo de prefs desde el hook. */
+/* JADX INFO: loaded from: classes10.dex */
 public final class ModulePackage {
+    public static final String NAME = "dev.ryan.tikratu";
+
     private ModulePackage() {
     }
-
-    public static final String NAME = "dev.ryan.tikratu";
 }

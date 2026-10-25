@@ -1,134 +1,82 @@
 package dev.ryan.tikratu.mods.feed;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import dev.ryan.tikratu.Xposed.RuntimeSettings;
 import dev.ryan.tikratu.utils.Prefs;
 import dev.ryan.tikratu.utils.log.ModuleLog;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 
-/**
- * Filtro de feed: saca items de la lista que TikTok recibe del servidor,
- * ANTES de que llegue al RecyclerView — no fuerza ningun discriminador de
- * tipo global (isPhotoMode, getIsTikTokStory, etc.), asi que no cambia como
- * se renderiza el contenido que si se muestra.
- *
- * Punto de hook tomado del parche "Feed filter" de
- * github.com/icysymmetra/tiktok-patches-for-morphe (fork de ReVanced),
- * verificado en TikTok 47.0.3 (nombres sin ofuscar):
- *   - com.ss.android.ugc.aweme.feed.FeedApiService.fetchFeedList(1 param)
- *     -> devuelve com.ss.android.ugc.aweme.feed.model.FeedItemList
- *   - FeedItemList.items (List de Aweme) / FeedItemList.getItems()
- * Se filtra en ambos: la respuesta de red (fetchFeedList) y la lectura
- * (getItems), porque TikTok tambien arma el feed desde cache sin volver a
- * pasar por fetchFeedList.
- *
- * Criterios (misma logica que los filtros de icysymmetra, getters
- * verificados en Aweme.java/Video.java/AwemeStatistics.java de 47.0.3):
- *   - LIVE: getLiveId() > 0 || isLiveReplay() || getLiveType() no vacio
- *           || getAwemeType() == 101
- *   - Historias: getIsTikTokStory()
- *   - Tienda: getShareUrl() contiene "placeholder_product_id"
- *   - Fotos/presentacion: getImageInfos() no vacio
- *           || getPhotoModeImageInfo() != null || getPhotoModeTextInfo() != null
- *   - Largos: getVideo().getDuration() > maxDurationSec — getDuration()
- *           devuelve el campo JSON "duration" (videoLength); se ASUME en
- *           milisegundos (convencion de la API de TikTok), no verificado
- *           todavia con un video de duracion conocida
- *   - Vistas/likes: getStatistics().getPlayCount()/getDiggCount() < minimo
- *   - Descripcion: getDesc() contiene alguna palabra de la lista
- */
+/* JADX INFO: loaded from: classes3.dex */
 public class FeedFilterBlocker {
-
+    private static final int AWEME_TYPE_LIVE = 101;
     private static final String FEED_API_SERVICE = "com.ss.android.ugc.aweme.feed.FeedApiService";
     private static final String FEED_ITEM_LIST = "com.ss.android.ugc.aweme.feed.model.FeedItemList";
-    private static final int AWEME_TYPE_LIVE = 101;
     private static final String SHOP_MARKER = "placeholder_product_id";
 
-    // Los criterios se leen EN VIVO en cada disparo (RuntimeSettings), no se
-    // cachean en el constructor — así prender/apagar cualquier filtro aplica
-    // sin reiniciar TikTok. El hook se instala siempre; si no hay ningún
-    // criterio activo, filterList no saca nada.
-
-    private static boolean anyActive() {
-        return RuntimeSettings.enabled(Prefs.KEY_HIDE_LIVE, Prefs.DEFAULT_HIDE_LIVE)
-                || RuntimeSettings.enabled(Prefs.KEY_HIDE_STORY, Prefs.DEFAULT_HIDE_STORY)
-                || RuntimeSettings.enabled(Prefs.KEY_HIDE_SHOP, Prefs.DEFAULT_HIDE_SHOP)
-                || RuntimeSettings.enabled(Prefs.KEY_HIDE_IMAGE, Prefs.DEFAULT_HIDE_IMAGE)
-                || RuntimeSettings.enabled(Prefs.KEY_HIDE_PROMOTED_MUSIC, Prefs.DEFAULT_HIDE_PROMOTED_MUSIC)
-                || RuntimeSettings.getLong(Prefs.KEY_MAX_DURATION_SEC, Prefs.DEFAULT_MAX_DURATION_SEC) > 0
-                || RuntimeSettings.getLong(Prefs.KEY_MIN_VIEWS, Prefs.DEFAULT_MIN_VIEWS) > 0
-                || RuntimeSettings.getLong(Prefs.KEY_MIN_LIKES, Prefs.DEFAULT_MIN_LIKES) > 0
-                || !RuntimeSettings.getString(Prefs.KEY_CAPTION_BLOCKLIST, Prefs.DEFAULT_CAPTION_BLOCKLIST).trim().isEmpty()
-                || forceRegionActive();
+    /* JADX INFO: Access modifiers changed from: private */
+    public static boolean anyActive() {
+        return RuntimeSettings.enabled(Prefs.KEY_HIDE_LIVE, false) || RuntimeSettings.enabled(Prefs.KEY_HIDE_STORY, false) || RuntimeSettings.enabled(Prefs.KEY_HIDE_SHOP, false) || RuntimeSettings.enabled(Prefs.KEY_HIDE_IMAGE, false) || RuntimeSettings.enabled(Prefs.KEY_HIDE_PROMOTED_MUSIC, false) || RuntimeSettings.getLong(Prefs.KEY_MAX_DURATION_SEC, 0L) > 0 || RuntimeSettings.getLong(Prefs.KEY_MIN_VIEWS, 0L) > 0 || RuntimeSettings.getLong(Prefs.KEY_MIN_LIKES, 0L) > 0 || !RuntimeSettings.getString(Prefs.KEY_CAPTION_BLOCKLIST, "").trim().isEmpty() || forceRegionActive();
     }
 
-    /** "Forzar modo de región": activo sólo si el toggle está on Y hay un país elegido. */
     private static boolean forceRegionActive() {
-        return RuntimeSettings.enabled(Prefs.KEY_FORCE_REGION, Prefs.DEFAULT_FORCE_REGION)
-                && !RuntimeSettings.getString(Prefs.KEY_REGION_CODE, Prefs.DEFAULT_REGION_CODE).trim().isEmpty();
+        return RuntimeSettings.enabled(Prefs.KEY_FORCE_REGION, false) && !RuntimeSettings.getString(Prefs.KEY_REGION_CODE, "").trim().isEmpty();
     }
 
     public void block(ClassLoader classLoader) {
-        XC_MethodHook filterResult = new XC_MethodHook() {
-            @Override
-            protected void afterHookedMethod(MethodHookParam param) {
-                filterFeedItemList(param.getResult());
+        XC_MethodHook filterResult = new XC_MethodHook() { // from class: dev.ryan.tikratu.mods.feed.FeedFilterBlocker.1
+            protected void afterHookedMethod(XC_MethodHook.MethodHookParam param) {
+                FeedFilterBlocker.this.filterFeedItemList(param.getResult());
             }
         };
-
         try {
             Class<?> api = XposedHelpers.findClass(FEED_API_SERVICE, classLoader);
             int n = XposedBridge.hookAllMethods(api, "fetchFeedList", filterResult).size();
-            ModuleLog.line("(TikRatu | FeedFilterBlocker): hooked " + FEED_API_SERVICE + ".fetchFeedList (" + n + " metodos)");
+            ModuleLog.line("(TikRatu | FeedFilterBlocker): hooked com.ss.android.ugc.aweme.feed.FeedApiService.fetchFeedList (" + n + " metodos)");
         } catch (Throwable t) {
             ModuleLog.line("(TikRatu | FeedFilterBlocker): fallo hook fetchFeedList (" + t.getMessage() + ")");
         }
-
         try {
-            // getItems() a veces devuelve una COPIA de this.items (verificado en
-            // FeedItemList.java de 47.0.3) — se filtra el valor devuelto, no se
-            // reemplaza por el campo, para no cambiar esa semantica.
-            XposedHelpers.findAndHookMethod(FEED_ITEM_LIST, classLoader, "getItems", new XC_MethodHook() {
-                @Override
-                protected void afterHookedMethod(MethodHookParam param) {
-                    // Confirmado en dispositivo real: getItems() se llama decenas de
-                    // veces por lote. Se limpia el campo de origen una vez (las
-                    // llamadas siguientes ya no encuentran nada que sacar) y se
-                    // filtra tambien el valor devuelto por si ya era una copia.
-                    if (!anyActive()) return;
-                    filterFeedItemList(param.thisObject);
-                    Object result = param.getResult();
-                    if (result instanceof List) {
-                        List<Object> filtered = filterList((List<?>) result, false);
-                        if (filtered != null) param.setResult(filtered);
+            XposedHelpers.findAndHookMethod(FEED_ITEM_LIST, classLoader, "getItems", new Object[]{new XC_MethodHook() { // from class: dev.ryan.tikratu.mods.feed.FeedFilterBlocker.2
+                protected void afterHookedMethod(XC_MethodHook.MethodHookParam param) {
+                    List<Object> filtered;
+                    if (FeedFilterBlocker.anyActive()) {
+                        FeedFilterBlocker.this.filterFeedItemList(param.thisObject);
+                        Object result = param.getResult();
+                        if (!(result instanceof List) || (filtered = FeedFilterBlocker.this.filterList((List) result, false)) == null) {
+                            return;
+                        }
+                        param.setResult(filtered);
                     }
                 }
-            });
-            ModuleLog.line("(TikRatu | FeedFilterBlocker): hooked " + FEED_ITEM_LIST + ".getItems()");
-        } catch (Throwable t) {
-            ModuleLog.line("(TikRatu | FeedFilterBlocker): fallo hook getItems (" + t.getMessage() + ")");
+            }});
+            ModuleLog.line("(TikRatu | FeedFilterBlocker): hooked com.ss.android.ugc.aweme.feed.model.FeedItemList.getItems()");
+        } catch (Throwable t2) {
+            ModuleLog.line("(TikRatu | FeedFilterBlocker): fallo hook getItems (" + t2.getMessage() + ")");
         }
     }
 
-    private void filterFeedItemList(Object feedItemList) {
-        if (feedItemList == null || !anyActive()) return;
+    /* JADX INFO: Access modifiers changed from: private */
+    public void filterFeedItemList(Object feedItemList) {
+        List<Object> filtered;
+        if (feedItemList == null || !anyActive()) {
+            return;
+        }
         try {
             Object raw = XposedHelpers.getObjectField(feedItemList, "items");
-            if (!(raw instanceof List)) return;
-            List<Object> filtered = filterList((List<?>) raw, true);
-            if (filtered != null) XposedHelpers.setObjectField(feedItemList, "items", filtered);
+            if ((raw instanceof List) && (filtered = filterList((List) raw, true)) != null) {
+                XposedHelpers.setObjectField(feedItemList, "items", filtered);
+            }
         } catch (Throwable t) {
             ModuleLog.line("(TikRatu | FeedFilterBlocker): error filtrando (" + t.getMessage() + ")");
         }
     }
 
-    /** Devuelve una lista nueva sin los items a ocultar, o null si no hay nada que sacar. */
-    private List<Object> filterList(List<?> items, boolean log) {
+    /* JADX INFO: Access modifiers changed from: private */
+    public List<Object> filterList(List<?> items, boolean log) {
         List<Object> kept = new ArrayList<>(items.size());
         int removed = 0;
         for (Object item : items) {
@@ -138,7 +86,9 @@ public class FeedFilterBlocker {
                 kept.add(item);
             }
         }
-        if (removed == 0) return null;
+        if (removed == 0) {
+            return null;
+        }
         if (log) {
             ModuleLog.line("(TikRatu | FeedFilterBlocker): " + removed + " de " + items.size() + " items filtrados");
         }
@@ -146,93 +96,109 @@ public class FeedFilterBlocker {
     }
 
     private boolean shouldHide(Object aweme) {
-        if (RuntimeSettings.enabled(Prefs.KEY_HIDE_LIVE, Prefs.DEFAULT_HIDE_LIVE) && isLive(aweme)) return true;
-        if (RuntimeSettings.enabled(Prefs.KEY_HIDE_STORY, Prefs.DEFAULT_HIDE_STORY) && bool(aweme, "getIsTikTokStory")) return true;
-        if (RuntimeSettings.enabled(Prefs.KEY_HIDE_SHOP, Prefs.DEFAULT_HIDE_SHOP) && isShop(aweme)) return true;
-        if (RuntimeSettings.enabled(Prefs.KEY_HIDE_IMAGE, Prefs.DEFAULT_HIDE_IMAGE) && isImage(aweme)) return true;
-        if (RuntimeSettings.enabled(Prefs.KEY_HIDE_PROMOTED_MUSIC, Prefs.DEFAULT_HIDE_PROMOTED_MUSIC) && bool(aweme, "isWithPromotionalMusic")) return true;
-
-        long maxDurationSec = RuntimeSettings.getLong(Prefs.KEY_MAX_DURATION_SEC, Prefs.DEFAULT_MAX_DURATION_SEC);
-        if (maxDurationSec > 0 && isLongerThan(aweme, maxDurationSec)) return true;
-
-        long minViews = RuntimeSettings.getLong(Prefs.KEY_MIN_VIEWS, Prefs.DEFAULT_MIN_VIEWS);
-        long minLikes = RuntimeSettings.getLong(Prefs.KEY_MIN_LIKES, Prefs.DEFAULT_MIN_LIKES);
-        if (minViews > 0 || minLikes > 0) {
-            Object stats = call(aweme, "getStatistics");
-            if (stats != null) {
-                if (minViews > 0 && num(stats, "getPlayCount") < minViews) return true;
-                if (minLikes > 0 && num(stats, "getDiggCount") < minLikes) return true;
+        Object stats;
+        if (RuntimeSettings.enabled(Prefs.KEY_HIDE_LIVE, false) && isLive(aweme)) {
+            return true;
+        }
+        if (RuntimeSettings.enabled(Prefs.KEY_HIDE_STORY, false) && bool(aweme, "getIsTikTokStory")) {
+            return true;
+        }
+        if (RuntimeSettings.enabled(Prefs.KEY_HIDE_SHOP, false) && isShop(aweme)) {
+            return true;
+        }
+        if (RuntimeSettings.enabled(Prefs.KEY_HIDE_IMAGE, false) && isImage(aweme)) {
+            return true;
+        }
+        if (RuntimeSettings.enabled(Prefs.KEY_HIDE_PROMOTED_MUSIC, false) && bool(aweme, "isWithPromotionalMusic")) {
+            return true;
+        }
+        long maxDurationSec = RuntimeSettings.getLong(Prefs.KEY_MAX_DURATION_SEC, 0L);
+        if (maxDurationSec > 0 && isLongerThan(aweme, maxDurationSec)) {
+            return true;
+        }
+        long minViews = RuntimeSettings.getLong(Prefs.KEY_MIN_VIEWS, 0L);
+        long minLikes = RuntimeSettings.getLong(Prefs.KEY_MIN_LIKES, 0L);
+        if ((minViews > 0 || minLikes > 0) && (stats = call(aweme, "getStatistics")) != null) {
+            if (minViews > 0 && num(stats, "getPlayCount") < minViews) {
+                return true;
+            }
+            if (minLikes > 0 && num(stats, "getDiggCount") < minLikes) {
+                return true;
             }
         }
-
-        // Forzar modo de región: ocultar posts cuya región (Aweme.getRegion(),
-        // campo JSON "region", ISO alpha-2 mayúsculas) difiera de la elegida.
-        // Si el post no trae región (vacío/null) se CONSERVA, para no vaciar el
-        // feed por completo con contenido sin geo-tag.
         if (forceRegionActive()) {
-            String want = RuntimeSettings.getString(Prefs.KEY_REGION_CODE, Prefs.DEFAULT_REGION_CODE).trim();
+            String want = RuntimeSettings.getString(Prefs.KEY_REGION_CODE, "").trim();
             Object region = call(aweme, "getRegion");
             if (region instanceof String) {
                 String have = ((String) region).trim();
-                if (!have.isEmpty() && !have.equalsIgnoreCase(want)) return true;
+                if (!have.isEmpty() && !have.equalsIgnoreCase(want)) {
+                    return true;
+                }
             }
         }
-
-        String blocklist = RuntimeSettings.getString(Prefs.KEY_CAPTION_BLOCKLIST, Prefs.DEFAULT_CAPTION_BLOCKLIST);
+        String blocklist = RuntimeSettings.getString(Prefs.KEY_CAPTION_BLOCKLIST, "");
         if (!blocklist.trim().isEmpty()) {
             Object desc = call(aweme, "getDesc");
             if (desc instanceof String) {
                 String lower = ((String) desc).toLowerCase(Locale.ROOT);
                 for (String w : blocklist.split(",")) {
                     String word = w.trim().toLowerCase(Locale.ROOT);
-                    if (!word.isEmpty() && lower.contains(word)) return true;
+                    if (!word.isEmpty() && lower.contains(word)) {
+                        return true;
+                    }
                 }
+                return false;
             }
+            return false;
         }
         return false;
     }
 
     private static boolean isLive(Object aweme) {
-        if (num(aweme, "getLiveId") > 0) return true;
-        if (bool(aweme, "isLiveReplay")) return true;
+        if (num(aweme, "getLiveId") > 0 || bool(aweme, "isLiveReplay")) {
+            return true;
+        }
         Object liveType = call(aweme, "getLiveType");
-        if (liveType instanceof String && !((String) liveType).isEmpty()) return true;
-        return num(aweme, "getAwemeType") == AWEME_TYPE_LIVE;
+        return ((liveType instanceof String) && !((String) liveType).isEmpty()) || num(aweme, "getAwemeType") == 101;
     }
 
     private static boolean isShop(Object aweme) {
         Object shareUrl = call(aweme, "getShareUrl");
-        return shareUrl instanceof String && ((String) shareUrl).contains(SHOP_MARKER);
+        return (shareUrl instanceof String) && ((String) shareUrl).contains(SHOP_MARKER);
     }
 
     private static boolean isImage(Object aweme) {
         Object images = call(aweme, "getImageInfos");
-        if (images instanceof List && !((List<?>) images).isEmpty()) return true;
-        return call(aweme, "getPhotoModeImageInfo") != null || call(aweme, "getPhotoModeTextInfo") != null;
+        return ((!(images instanceof List) || ((List) images).isEmpty()) && call(aweme, "getPhotoModeImageInfo") == null && call(aweme, "getPhotoModeTextInfo") == null) ? false : true;
     }
 
     private static boolean isLongerThan(Object aweme, long maxSec) {
         Object video = call(aweme, "getVideo");
-        if (video == null) return false;
+        if (video == null) {
+            return false;
+        }
         long durationMs = num(video, "getDuration");
-        return durationMs > maxSec * 1000L;
+        return durationMs > 1000 * maxSec;
     }
 
     private static Object call(Object obj, String method) {
         try {
-            return XposedHelpers.callMethod(obj, method);
-        } catch (Throwable t) {
+            return XposedHelpers.callMethod(obj, method, new Object[0]);
+        } catch (Throwable th) {
             return null;
         }
     }
 
     private static boolean bool(Object obj, String method) {
         Object v = call(obj, method);
-        return v instanceof Boolean && (Boolean) v;
+        return (v instanceof Boolean) && ((Boolean) v).booleanValue();
     }
 
     private static long num(Object obj, String method) {
         Object v = call(obj, method);
-        return v instanceof Number ? ((Number) v).longValue() : 0L;
+        if (v instanceof Number) {
+            return ((Number) v).longValue();
+        }
+        return 0L;
     }
 }

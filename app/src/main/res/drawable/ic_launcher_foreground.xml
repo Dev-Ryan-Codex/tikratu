@@ -1,47 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Ícono de TikRatu: una CORONA (por "Ratu" = reina) en la técnica duotono/
-     glitch de TikTok — capas cian y roja desfasadas (offset cromático) detrás
-     de una silueta clara al frente. Reemplaza el escudo anterior; la corona
-     ata el nombre del módulo a la identidad visual de TikTok sin copiar su
-     nota musical. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="108dp"
     android:height="108dp"
+    android:width="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-
-    <!-- Capa roja, desfasada -->
-    <group android:translateX="4" android:translateY="3">
+    <group
+        android:translateX="4"
+        android:translateY="3">
         <path
-            android:fillColor="#FE2C55"
-            android:pathData="M30,62 L37,42 L48,54 L54,37 L60,54 L71,42 L78,62 L78,73 L30,73 Z" />
+            android:fillColor="#fe2c55"
+            android:pathData="M30,62 L37,42 L48,54 L54,37 L60,54 L71,42 L78,62 L78,73 L30,73 Z"/>
     </group>
-
-    <!-- Capa cian, desfasada al otro lado -->
-    <group android:translateX="-4" android:translateY="-3">
+    <group
+        android:translateX="-4"
+        android:translateY="-3">
         <path
-            android:fillColor="#25F4EE"
-            android:pathData="M30,62 L37,42 L48,54 L54,37 L60,54 L71,42 L78,62 L78,73 L30,73 Z" />
+            android:fillColor="#25f4ee"
+            android:pathData="M30,62 L37,42 L48,54 L54,37 L60,54 L71,42 L78,62 L78,73 L30,73 Z"/>
     </group>
-
-    <!-- Silueta al frente -->
     <path
-        android:fillColor="#F2F2F5"
-        android:pathData="M30,62 L37,42 L48,54 L54,37 L60,54 L71,42 L78,62 L78,73 L30,73 Z" />
-
-    <!-- Banda inferior de la corona (línea separadora) -->
+        android:fillColor="#f2f2f5"
+        android:pathData="M30,62 L37,42 L48,54 L54,37 L60,54 L71,42 L78,62 L78,73 L30,73 Z"/>
     <path
-        android:fillColor="#0D0D0F"
-        android:pathData="M31,64 L77,64 L77,67 L31,67 Z" />
-
-    <!-- Joyas en las puntas -->
+        android:fillColor="#0d0d0f"
+        android:pathData="M31,64 L77,64 L77,67 L31,67 Z"/>
     <path
-        android:fillColor="#0D0D0F"
-        android:pathData="M37,44 m-2.4,0 a2.4,2.4 0 1,0 4.8,0 a2.4,2.4 0 1,0 -4.8,0 Z" />
+        android:fillColor="#0d0d0f"
+        android:pathData="M37,44 m-2.4,0 a2.4,2.4 0 1,0 4.8,0 a2.4,2.4 0 1,0 -4.8,0 Z"/>
     <path
-        android:fillColor="#0D0D0F"
-        android:pathData="M54,39 m-2.4,0 a2.4,2.4 0 1,0 4.8,0 a2.4,2.4 0 1,0 -4.8,0 Z" />
+        android:fillColor="#0d0d0f"
+        android:pathData="M54,39 m-2.4,0 a2.4,2.4 0 1,0 4.8,0 a2.4,2.4 0 1,0 -4.8,0 Z"/>
     <path
-        android:fillColor="#0D0D0F"
-        android:pathData="M71,44 m-2.4,0 a2.4,2.4 0 1,0 4.8,0 a2.4,2.4 0 1,0 -4.8,0 Z" />
+        android:fillColor="#0d0d0f"
+        android:pathData="M71,44 m-2.4,0 a2.4,2.4 0 1,0 4.8,0 a2.4,2.4 0 1,0 -4.8,0 Z"/>
 </vector>

@@ -6,34 +6,20 @@ import dev.ryan.tikratu.Xposed.RuntimeSettings;
 import dev.ryan.tikratu.utils.Prefs;
 import dev.ryan.tikratu.utils.log.ModuleLog;
 
-/**
- * "Dejar de reproducir en bucle" — el video se detiene al terminar en vez de
- * repetirse.
- *
- * Punto de hook tomado del parche "Stop video looping" de
- * icysymmetra/tiktok-patches-for-morphe (fork de ReVanced): el reproductor
- * de ByteDance es com.ss.ttvideoengine.TTVideoEngine, con el metodo publico
- * setLooping(boolean). Confirmado en TikTok 47.0.3 (strings del dex: la
- * clase y el metodo aparecen sin ofuscar, son de una libreria de ByteDance,
- * no del codigo minificado de la app). Se fuerza el argumento a false antes
- * de que corra el metodo original.
- */
+/* JADX INFO: loaded from: classes11.dex */
 public class StopVideoLoopingBlocker {
-
     private static final String VIDEO_ENGINE_CLASS = "com.ss.ttvideoengine.TTVideoEngine";
 
     public void block(ClassLoader classLoader) {
         try {
-            XposedHelpers.findAndHookMethod(VIDEO_ENGINE_CLASS, classLoader, "setLooping", boolean.class,
-                    new XC_MethodHook() {
-                        @Override
-                        protected void beforeHookedMethod(MethodHookParam param) {
-                            if (RuntimeSettings.enabled(Prefs.KEY_STOP_VIDEO_LOOPING, Prefs.DEFAULT_STOP_VIDEO_LOOPING)) {
-                                param.args[0] = false;
-                            }
-                        }
-                    });
-            ModuleLog.line("(TikRatu | StopVideoLoopingBlocker): hooked " + VIDEO_ENGINE_CLASS + ".setLooping(boolean)");
+            XposedHelpers.findAndHookMethod(VIDEO_ENGINE_CLASS, classLoader, "setLooping", new Object[]{Boolean.TYPE, new XC_MethodHook() { // from class: dev.ryan.tikratu.mods.interaction.StopVideoLoopingBlocker.1
+                protected void beforeHookedMethod(XC_MethodHook.MethodHookParam param) {
+                    if (RuntimeSettings.enabled(Prefs.KEY_STOP_VIDEO_LOOPING, false)) {
+                        param.args[0] = false;
+                    }
+                }
+            }});
+            ModuleLog.line("(TikRatu | StopVideoLoopingBlocker): hooked com.ss.ttvideoengine.TTVideoEngine.setLooping(boolean)");
         } catch (Throwable t) {
             ModuleLog.line("(TikRatu | StopVideoLoopingBlocker): fallo el hook (" + t.getMessage() + ")");
         }

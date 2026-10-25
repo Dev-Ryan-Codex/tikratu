@@ -1,136 +1,120 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="?attr/colorSurface"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="?attr/colorSurface">
-
+    android:layout_height="match_parent">
     <TextView
-        android:id="@+id/tv_screen_title"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:paddingStart="20dp"
-        android:paddingEnd="20dp"
-        android:paddingTop="24dp"
-        android:paddingBottom="10dp"
-        android:text="@string/app_name"
+        android:textAppearance="?attr/textAppearanceHeadlineMedium"
         android:textStyle="bold"
         android:textColor="?attr/colorOnSurface"
-        android:textAppearance="?attr/textAppearanceHeadlineMedium" />
-
+        android:id="@+id/tv_screen_title"
+        android:paddingTop="24dp"
+        android:paddingBottom="10dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/app_name"
+        android:layout_alignParentTop="true"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"/>
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_nav"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        app:menu="@menu/bottom_nav_menu" />
-
+        app:menu="@menu/bottom_nav_menu"/>
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_features"
+        android:paddingBottom="16dp"
+        android:clipToPadding="false"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/tv_screen_title"
-        android:layout_above="@id/bottom_nav"
-        android:clipToPadding="false"
-        android:paddingBottom="16dp" />
-
+        android:layout_above="@+id/bottom_nav"
+        android:layout_below="@+id/tv_screen_title"/>
     <ScrollView
         android:id="@+id/settings_container"
+        android:visibility="gone"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/tv_screen_title"
-        android:layout_above="@id/bottom_nav"
-        android:visibility="gone">
-
+        android:layout_above="@+id/bottom_nav"
+        android:layout_below="@+id/tv_screen_title">
         <LinearLayout
+            android:orientation="vertical"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
+            android:layout_height="wrap_content">
             <LinearLayout
+                android:orientation="vertical"
                 android:id="@+id/action_repo"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
                 android:background="?attr/selectableItemBackground"
-                android:clickable="true"
                 android:focusable="true"
-                android:orientation="vertical"
-                android:paddingHorizontal="20dp"
-                android:paddingVertical="18dp">
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="@string/settings_repo_title"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="17sp" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="@string/settings_repo_desc"
-                    android:textColor="?attr/colorOnSurfaceVariant"
-                    android:textSize="14sp" />
-            </LinearLayout>
-
-            <LinearLayout
+                android:clickable="true"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
                 android:paddingHorizontal="20dp"
                 android:paddingVertical="18dp">
-
                 <TextView
+                    android:textSize="17sp"
+                    android:textColor="?attr/colorOnSurface"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/settings_disclaimer_title"
-                    android:textColor="?attr/colorOnSurface"
-                    android:textSize="17sp" />
-
+                    android:text="@string/settings_repo_title"/>
                 <TextView
+                    android:textSize="14sp"
+                    android:textColor="?attr/colorOnSurfaceVariant"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:text="@string/settings_disclaimer_desc"
+                    android:text="@string/settings_repo_desc"/>
+            </LinearLayout>
+            <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="20dp"
+                android:paddingVertical="18dp">
+                <TextView
+                    android:textSize="17sp"
+                    android:textColor="?attr/colorOnSurface"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/settings_disclaimer_title"/>
+                <TextView
+                    android:textSize="14sp"
                     android:textColor="?attr/colorOnSurfaceVariant"
-                    android:textSize="14sp" />
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="@string/settings_disclaimer_desc"/>
             </LinearLayout>
         </LinearLayout>
     </ScrollView>
-
     <ScrollView
         android:id="@+id/info_container"
+        android:visibility="gone"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@id/tv_screen_title"
-        android:layout_above="@id/bottom_nav"
-        android:visibility="gone">
-
+        android:layout_above="@+id/bottom_nav"
+        android:layout_below="@+id/tv_screen_title">
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="20dp">
-
+            android:padding="20dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
             <TextView
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:textColor="?attr/colorOnSurface"
                 android:id="@+id/tv_info_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/info_title"
-                android:textColor="?attr/colorOnSurface"
-                android:textStyle="bold"
-                android:textSize="20sp" />
-
+                android:text="@string/info_title"/>
             <TextView
+                android:textSize="14sp"
+                android:textColor="?attr/colorOnSurfaceVariant"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:lineSpacingExtra="4dp"
                 android:text="@string/info_body"
-                android:textColor="?attr/colorOnSurfaceVariant"
-                android:textSize="14sp" />
+                android:lineSpacingExtra="4dp"/>
         </LinearLayout>
     </ScrollView>
 </RelativeLayout>

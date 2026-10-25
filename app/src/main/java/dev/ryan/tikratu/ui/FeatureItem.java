@@ -1,32 +1,34 @@
 package dev.ryan.tikratu.ui;
 
+/* JADX INFO: loaded from: classes6.dex */
 public class FeatureItem {
-
-    public enum Type { HEADER, SWITCH, ACTION, STATUS }
-
-    public interface OnToggle {
-        void onToggle(boolean checked);
-    }
+    public final boolean defaultValue;
+    public final String description;
+    public final OnClick onClick;
+    public final OnToggle onToggle;
+    public final String prefKey;
+    public String statusModule;
+    public String statusVersion;
+    public final String title;
+    public final Type type;
+    public String value;
 
     public interface OnClick {
         void onClick();
     }
 
-    public final Type type;
-    public final String title;
-    public final String description;
-    public final String prefKey;
-    public final boolean defaultValue;
-    public final OnToggle onToggle;
-    public String value;
-    public final OnClick onClick;
-    // Solo para STATUS: textos dinámicos (estado del módulo + versión de TikTok).
-    public String statusModule;
-    public String statusVersion;
+    public interface OnToggle {
+        void onToggle(boolean z);
+    }
 
-    private FeatureItem(Type type, String title, String description,
-                         String prefKey, boolean defaultValue, OnToggle onToggle,
-                         String value, OnClick onClick) {
+    public enum Type {
+        HEADER,
+        SWITCH,
+        ACTION,
+        STATUS
+    }
+
+    private FeatureItem(Type type, String title, String description, String prefKey, boolean defaultValue, OnToggle onToggle, String value, OnClick onClick) {
         this.type = type;
         this.title = title;
         this.description = description;
@@ -41,13 +43,11 @@ public class FeatureItem {
         return new FeatureItem(Type.HEADER, title, null, null, false, null, null, null);
     }
 
-    public static FeatureItem toggle(String title, String description,
-                                      String prefKey, boolean defaultValue) {
+    public static FeatureItem toggle(String title, String description, String prefKey, boolean defaultValue) {
         return toggle(title, description, prefKey, defaultValue, null);
     }
 
-    public static FeatureItem toggle(String title, String description,
-                                      String prefKey, boolean defaultValue, OnToggle onToggle) {
+    public static FeatureItem toggle(String title, String description, String prefKey, boolean defaultValue, OnToggle onToggle) {
         return new FeatureItem(Type.SWITCH, title, description, prefKey, defaultValue, onToggle, null, null);
     }
 
@@ -59,7 +59,6 @@ public class FeatureItem {
         return new FeatureItem(Type.ACTION, title, description, null, false, null, value, onClick);
     }
 
-    /** Tarjeta de estado del módulo + botón "Abrir TikTok", como primer item del tab Inicio. */
     public static FeatureItem status(String statusModule, String statusVersion, OnClick onOpenTikTok) {
         FeatureItem item = new FeatureItem(Type.STATUS, null, null, null, false, null, null, onOpenTikTok);
         item.statusModule = statusModule;

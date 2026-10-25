@@ -10,8 +10,8 @@ android {
         applicationId "dev.ryan.tikratu"
         minSdkVersion 28
         targetSdk 34
-        versionCode 10
-        versionName '0.7.3'
+        versionCode 13
+        versionName '0.9.1'
     }
 
     // Llave de firma fija: sin esto cada build de CI usa una debug key nueva,
