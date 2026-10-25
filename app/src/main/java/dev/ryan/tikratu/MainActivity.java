@@ -157,6 +157,7 @@ public class MainActivity extends AppCompatActivity {
         list.add(FeatureItem.toggle(getString(R.string.feature_photo_watermark_title), getString(R.string.feature_photo_watermark_desc), Prefs.KEY_PHOTO_WATERMARK_BLOCKER, true));
         list.add(FeatureItem.toggle(getString(R.string.feature_download_unlock_title), getString(R.string.feature_download_unlock_desc), Prefs.KEY_DOWNLOAD_UNLOCK_BLOCKER, true));
         list.add(FeatureItem.header(getString(R.string.section_ui)));
+        list.add(FeatureItem.toggle(getString(R.string.feature_hide_tako_title), getString(R.string.feature_hide_tako_desc), Prefs.KEY_HIDE_TAKO_AI, false));
         list.add(FeatureItem.toggle(getString(R.string.feature_screen_capture_title), getString(R.string.feature_screen_capture_desc), Prefs.KEY_SCREEN_CAPTURE_BLOCKER, false));
         list.add(FeatureItem.toggle(getString(R.string.feature_disable_login_title), getString(R.string.feature_disable_login_desc), Prefs.KEY_DISABLE_LOGIN, false));
         list.add(FeatureItem.toggle(getString(R.string.feature_google_login_title), getString(R.string.feature_google_login_desc), Prefs.KEY_GOOGLE_LOGIN_FIX, false));

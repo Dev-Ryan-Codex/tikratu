@@ -10,7 +10,6 @@ import dev.ryan.tikratu.utils.AppPrefs;
 import dev.ryan.tikratu.utils.Prefs;
 import java.util.Calendar;
 
-/* JADX INFO: loaded from: classes5.dex */
 public final class StreakReminderScheduler {
     private static final int REQUEST_CODE = 1001;
 
@@ -67,10 +66,17 @@ public final class StreakReminderScheduler {
         }
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(NotificationCompat.CATEGORY_ALARM);
         PendingIntent pendingIntent = buildPendingIntent(context);
-        if (Build.VERSION.SDK_INT >= 31) {
-            alarmManager.setExactAndAllowWhileIdle(0, next.getTimeInMillis(), pendingIntent);
-        } else {
-            alarmManager.setExact(0, next.getTimeInMillis(), pendingIntent);
+        long at = next.getTimeInMillis();
+        try {
+            // Android 12+: SCHEDULE_EXACT_ALARM viene denegado por defecto; sin el
+            // permiso se usa una alarma inexacta (puede retrasarse unos minutos).
+            if (Build.VERSION.SDK_INT < 31 || alarmManager.canScheduleExactAlarms()) {
+                alarmManager.setExactAndAllowWhileIdle(0, at, pendingIntent);
+            } else {
+                alarmManager.setAndAllowWhileIdle(0, at, pendingIntent);
+            }
+        } catch (SecurityException e) {
+            alarmManager.setAndAllowWhileIdle(0, at, pendingIntent);
         }
     }
 
