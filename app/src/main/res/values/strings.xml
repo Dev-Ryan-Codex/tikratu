@@ -101,6 +101,8 @@
     <string name="feature_sim_region_desc">Hace que el sistema reporte el país/operador de la región elegida (TikTok deriva carrier_region de ahí). Intenta cambiar el contenido, no solo filtrar.</string>
     <string name="feature_sim_region_title">Cambiar región por SIM</string>
     <string name="feature_stop_loop_desc">El video se detiene al terminar en lugar de repetirse solo, para que no te quedes pegado en el mismo clip (TTVideoEngine.setLooping).</string>
+    <string name="feature_hide_captcha_title">Ocultar CAPTCHA</string>
+    <string name="feature_hide_captcha_desc">No muestra el dialogo de verificacion CAPTCHA. Puede hacer que el login u otras acciones fallen o se queden esperando (SecApiImpl.popCaptcha).</string>
     <string name="feature_hide_tako_title">Ocultar Tako AI</string>
     <string name="feature_hide_tako_desc">Quita del feed el boton del asistente de IA de TikTok (TakoAssem).</string>
     <string name="feature_stop_loop_title">Dejar de reproducir en bucle</string>

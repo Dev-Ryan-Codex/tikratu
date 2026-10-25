@@ -10,6 +10,7 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage;
 import dev.ryan.tikratu.mods.ads.AdBlocker;
 import dev.ryan.tikratu.mods.ads.AdSignalsBlocker;
 import dev.ryan.tikratu.mods.feed.FeedFilterBlocker;
+import dev.ryan.tikratu.mods.interaction.CaptchaBlocker;
 import dev.ryan.tikratu.mods.interaction.DisableLoginBlocker;
 import dev.ryan.tikratu.mods.interaction.GoogleLoginFixBlocker;
 import dev.ryan.tikratu.mods.interaction.PlaybackSpeedBlocker;
@@ -74,6 +75,7 @@ public class Module implements IXposedHookLoadPackage, IXposedHookZygoteInit {
         new PlaybackSpeedBlocker().block(cl);
         new ScreenCaptureBlocker().block(cl);
         new DisableLoginBlocker().block(cl);
+        new CaptchaBlocker().block(cl);
         new RegionBlocker().block(cl);
         new TelephonyRegionBlocker().block(cl);
         new GoogleLoginFixBlocker().block(cl);

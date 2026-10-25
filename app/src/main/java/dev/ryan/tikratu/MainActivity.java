@@ -160,6 +160,7 @@ public class MainActivity extends AppCompatActivity {
         list.add(FeatureItem.toggle(getString(R.string.feature_hide_tako_title), getString(R.string.feature_hide_tako_desc), Prefs.KEY_HIDE_TAKO_AI, false));
         list.add(FeatureItem.toggle(getString(R.string.feature_screen_capture_title), getString(R.string.feature_screen_capture_desc), Prefs.KEY_SCREEN_CAPTURE_BLOCKER, false));
         list.add(FeatureItem.toggle(getString(R.string.feature_disable_login_title), getString(R.string.feature_disable_login_desc), Prefs.KEY_DISABLE_LOGIN, false));
+        list.add(FeatureItem.toggle(getString(R.string.feature_hide_captcha_title), getString(R.string.feature_hide_captcha_desc), Prefs.KEY_HIDE_CAPTCHA, false));
         list.add(FeatureItem.toggle(getString(R.string.feature_google_login_title), getString(R.string.feature_google_login_desc), Prefs.KEY_GOOGLE_LOGIN_FIX, false));
         this.fontItem = FeatureItem.action(getString(R.string.feature_font_style_title), getString(R.string.feature_font_style_desc), currentFontLabel(), () -> showFontPicker());
         list.add(this.fontItem);

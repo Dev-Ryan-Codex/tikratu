@@ -49,6 +49,7 @@ public final class Prefs {
     public static final String KEY_FONT_STYLE_BLOCKER = "pref_font_style_blocker_enabled";
     public static final String KEY_FORCE_REGION = "pref_force_region";
     public static final String KEY_GOOGLE_LOGIN_FIX = "pref_google_login_fix";
+    public static final String KEY_HIDE_CAPTCHA = "pref_hide_captcha";
     public static final String KEY_HIDE_IMAGE = "pref_feed_hide_image";
     public static final String KEY_HIDE_LIVE = "pref_feed_hide_live";
     public static final String KEY_HIDE_PROMOTED_MUSIC = "pref_feed_hide_promoted_music";
